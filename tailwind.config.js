@@ -9,13 +9,13 @@ export default {
       colors: {
         cruisy: {
           teal: '#34a4b8',
-          buoyRed: '#e11d48',
-          buoyYellow: '#facc15',
-          buoyBlack: '#0a0a0a',
+          navy: '#0f172a',
+          sand: '#f8fafc',
         }
       },
       fontFamily: {
         russo: ['"Russo One"', 'sans-serif'],
+        pacifico: ['Pacifico', 'cursive'],
         roboto: ['Roboto', 'sans-serif'],
       },
     },
