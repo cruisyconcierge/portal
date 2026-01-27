@@ -75,9 +75,8 @@ export default function App() {
       
       const data = await response.json();
       
-      // Safety check: WordPress API can return an error object instead of an array
       if (!Array.isArray(data)) {
-        throw new Error("Invalid data format received from WordPress. Check if the 'itinerary' REST API is public.");
+        throw new Error("Invalid data format received from WordPress.");
       }
       
       const mapped = data.map(item => ({
@@ -94,7 +93,7 @@ export default function App() {
       setItineraries(mapped);
     } catch (err) {
       console.error("API Fetch Error:", err);
-      setError(err.message || "Unable to sync with Cruisy Travel. Please ensure the WordPress REST API and CORS are configured.");
+      setError(err.message || "Unable to sync with Cruisy Travel.");
     } finally {
       setLoading(false);
     }
@@ -113,14 +112,13 @@ export default function App() {
     localStorage.removeItem('cruisy_advisor_session');
   };
 
-  // --- UI COMPONENTS: MODALS ---
-
+  // --- UI COMPONENTS: MODAL ---
   const Modal = ({ title, children, onClose }) => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white">
+        <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
           <h3 className="font-russo text-xl text-slate-800 uppercase tracking-tight">{title}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
             <X size={24} className="text-slate-400" />
           </button>
         </div>
@@ -179,10 +177,10 @@ export default function App() {
 
   // --- VIEW: DASHBOARD ---
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-roboto text-slate-800">
+    <div className="min-h-screen bg-[#f1f5f9] font-roboto text-slate-800">
       
       {/* NAVIGATION */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100 px-8 py-5 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-pacifico text-2xl text-slate-800 lowercase">Cruisy</span>
           <span className="font-russo text-xl text-[#34a4b8] uppercase">travel</span>
@@ -190,74 +188,92 @@ export default function App() {
         
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none">Cruisy Ambassador</span>
+            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none">Cruisy Advisor</span>
             <span className="font-pacifico text-[#34a4b8] text-lg leading-none mt-1 lowercase">{profile.slug}</span>
           </div>
-          <button onClick={handleLogout} className="p-3 bg-slate-50 text-slate-400 hover:text-red-500 rounded-full transition-colors">
+          <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-slate-800 rounded-full transition-colors">
             <LogOut size={20} />
           </button>
         </div>
       </nav>
 
-      {/* DASHBOARD HERO */}
-      <header className="max-w-7xl mx-auto px-6 pt-12 pb-8">
-        <div className="bg-gradient-to-br from-[#34a4b8] to-[#2c8ba0] rounded-[3rem] p-10 md:p-16 text-white relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12 pointer-events-none">
-            <Ship size={240} />
-          </div>
-          <div className="relative z-10 max-w-2xl space-y-6">
-            <h2 className="text-4xl md:text-5xl font-russo uppercase leading-tight">Welcome to the<br/>Advisor Lounge</h2>
-            <p className="text-lg text-white/80 font-medium">Curate custom itineraries for your clients and generate your personalized booking portal in seconds.</p>
-            <div className="flex flex-wrap gap-4 pt-4">
-              <button onClick={() => setActiveModal('profile')} className="bg-white text-[#34a4b8] px-8 py-4 rounded-2xl font-russo text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg hover:bg-slate-50 transition-all">
-                <Settings size={16} /> Edit Profile
-              </button>
-              <button onClick={() => setActiveModal('itinerary')} className="bg-slate-900/20 backdrop-blur text-white border border-white/20 px-8 py-4 rounded-2xl font-russo text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-white/10 transition-all">
-                <Palmtree size={16} /> Choose Experiences
-              </button>
+      {/* PROGRESS TRACKER */}
+      <div className="w-full h-1.5 flex bg-white">
+        <div className={`h-full flex-1 transition-all duration-700 ${activeTab === 'setup' || selectedIds.length > 0 ? 'bg-[#34a4b8] shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
+        <div className={`h-full flex-1 transition-all duration-700 ${selectedIds.length > 0 ? 'bg-[#34a4b8]/60 shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
+        <div className={`h-full flex-1 transition-all duration-700 ${activeModal === 'preview' ? 'bg-[#34a4b8]/40 shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
+      </div>
+
+      <main className="max-w-7xl mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        {/* DASHBOARD ACTIONS */}
+        <div className="lg:col-span-12">
+            <div className="bg-white rounded-[3.5rem] p-10 md:p-16 border border-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10">
+                <div className="space-y-6 relative z-10 max-w-xl">
+                    <h2 className="text-4xl md:text-5xl font-russo text-slate-800 uppercase leading-tight">Advisor<br/><span className="text-[#34a4b8]">Control Center</span></h2>
+                    <p className="text-slate-500 font-medium text-lg leading-relaxed">Manage your profile, curate client itineraries, and launch your personalized booking portal below.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+                    <button onClick={() => setActiveModal('profile')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 group">
+                        <User className="text-[#34a4b8] group-hover:scale-110 transition-transform" size={32} />
+                        <span className="font-russo text-[10px] uppercase tracking-[0.2em] text-slate-400">Settings</span>
+                        <span className="font-russo text-xs text-slate-800 uppercase">Edit Profile</span>
+                    </button>
+                    <button onClick={() => setActiveModal('itinerary')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 group">
+                        <Palmtree className="text-[#34a4b8] group-hover:scale-110 transition-transform" size={32} />
+                        <span className="font-russo text-[10px] uppercase tracking-[0.2em] text-slate-400">Inventory</span>
+                        <span className="font-russo text-xs text-slate-800 uppercase">Select Items</span>
+                    </button>
+                    <button onClick={() => setActiveModal('preview')} className="sm:col-span-2 p-8 bg-[#34a4b8] rounded-[2.5rem] flex items-center justify-center gap-4 hover:brightness-110 transition-all shadow-xl shadow-[#34a4b8]/20 group">
+                        <Eye className="text-white group-hover:scale-110 transition-transform" size={24} />
+                        <div className="flex flex-col items-start">
+                            <span className="font-russo text-[10px] uppercase tracking-[0.2em] text-white/60">Launch Portal</span>
+                            <span className="font-russo text-sm text-white uppercase">Live Preview & Share</span>
+                        </div>
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-      </header>
-
-      {/* QUICK STATS & TOOLS */}
-      <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center space-y-2">
-          <div className="w-12 h-12 bg-[#34a4b8]/10 rounded-2xl flex items-center justify-center text-[#34a4b8] mb-2">
-            <Navigation size={24} />
-          </div>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Port</span>
-          <span className="font-russo text-xl text-slate-800 uppercase">{profile.destination}</span>
         </div>
 
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center space-y-2">
-          <div className="w-12 h-12 bg-[#34a4b8]/10 rounded-2xl flex items-center justify-center text-[#34a4b8] mb-2">
-            <CheckCircle2 size={24} />
-          </div>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Items</span>
-          <span className="font-russo text-xl text-slate-800 uppercase">{selectedIds.length} Experiences</span>
-        </div>
-
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center space-y-4">
-          <button 
-            onClick={() => setActiveModal('preview')}
-            className="w-full h-full flex flex-col items-center justify-center gap-2 group"
-          >
-            <div className="w-12 h-12 bg-[#34a4b8] rounded-2xl flex items-center justify-center text-white mb-2 shadow-lg shadow-[#34a4b8]/20 group-hover:scale-110 transition-all">
-              <Eye size={24} />
+        {/* QUICK STATUS BAR */}
+        <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <MapPin className="text-[#34a4b8]" />
+                    <div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Base Port</p>
+                        <p className="font-russo text-slate-800 uppercase">{profile.destination}</p>
+                    </div>
+                </div>
             </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Preview</span>
-            <span className="font-russo text-sm text-[#34a4b8] uppercase">Launch View</span>
-          </button>
+            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <CheckCircle2 className="text-[#34a4b8]" />
+                    <div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Curated Experiences</p>
+                        <p className="font-russo text-slate-800 uppercase">{selectedIds.length} Selections</p>
+                    </div>
+                </div>
+            </div>
+            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Anchor className="text-[#34a4b8]" />
+                    <div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tracking Status</p>
+                        <p className="font-russo text-slate-800 uppercase">ACTIVE</p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </section>
+      </main>
 
       {/* MODAL: PROFILE SETUP */}
       {activeModal === 'profile' && (
-        <Modal title="Profile Settings" onClose={() => setActiveModal(null)}>
+        <Modal title="Profile Setup" onClose={() => setActiveModal(null)}>
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Display Name</label>
               <input 
                 className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800"
                 value={profile.fullName}
@@ -273,7 +289,7 @@ export default function App() {
                     onClick={() => setProfile({...profile, destination: d})}
                     className={`p-3 rounded-xl border text-[10px] font-black transition-all uppercase
                       ${profile.destination === d 
-                        ? 'bg-[#34a4b8] border-[#34a4b8] text-white' 
+                        ? 'bg-[#34a4b8] border-[#34a4b8] text-white shadow-lg' 
                         : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}
                   >
                     {d}
@@ -285,30 +301,32 @@ export default function App() {
               <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Advisor Bio</label>
               <textarea 
                 rows="4"
-                className="w-full p-5 rounded-3xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-sm leading-relaxed"
+                className="w-full p-5 rounded-3xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-sm leading-relaxed text-slate-800 font-medium"
                 value={profile.bio}
                 onChange={e => setProfile({...profile, bio: e.target.value})}
               />
             </div>
-            <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo uppercase tracking-widest">Save Settings</button>
+            <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo uppercase tracking-widest shadow-xl shadow-[#34a4b8]/20">Save Profile</button>
           </div>
         </Modal>
       )}
 
       {/* MODAL: ITINERARY SELECTION */}
       {activeModal === 'itinerary' && (
-        <Modal title="Select Experiences" onClose={() => setActiveModal(null)}>
+        <Modal title="Itinerary Management" onClose={() => setActiveModal(null)}>
           <div className="space-y-6">
-            <div className="p-4 bg-slate-50 rounded-2xl flex items-center gap-3">
-              <Info size={18} className="text-[#34a4b8]" />
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Choose the best activities for your clients in <strong>{profile.destination}</strong>. Your affiliate tracking is automatically attached.
+            <div className="p-6 bg-[#34a4b8]/5 rounded-3xl flex items-center gap-4 border border-[#34a4b8]/10">
+              <div className="bg-[#34a4b8] p-2 rounded-xl text-white">
+                <Info size={20} />
+              </div>
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                Choose the activities for your custom <strong>{profile.destination}</strong> itinerary. Your tracking ref is automatically injected into all links.
               </p>
             </div>
             
             <div className="grid grid-cols-1 gap-4">
-              {loading && <div className="flex justify-center p-12"><Loader2 className="animate-spin text-[#34a4b8]" /></div>}
-              {error && <div className="p-6 bg-red-50 text-red-500 rounded-2xl text-xs font-bold text-center">{error}</div>}
+              {loading && <div className="flex justify-center p-12 text-[#34a4b8]"><Loader2 className="animate-spin" /></div>}
+              {error && <div className="p-6 bg-red-50 text-red-500 rounded-3xl text-xs font-bold text-center border border-red-100">{error}</div>}
               
               {itineraries
                 .filter(exp => exp.destination === profile.destination)
@@ -334,23 +352,22 @@ export default function App() {
                   </div>
                 ))}
             </div>
-            <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo uppercase tracking-widest mt-4">Confirm Selection</button>
+            <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo uppercase tracking-widest mt-4">Confirm Itinerary</button>
           </div>
         </Modal>
       )}
 
       {/* MODAL: LIVE PREVIEW */}
       {activeModal === 'preview' && (
-        <Modal title="Live Preview" onClose={() => setActiveModal(null)}>
+        <Modal title="Client View Preview" onClose={() => setActiveModal(null)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="flex justify-center">
               <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl relative border-[8px] border-slate-800">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
-                  {/* Clean Island Header */}
                   <div className="h-4 bg-[#34a4b8]" />
                   <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col text-slate-900 text-center font-roboto">
                     <div className="p-8 bg-slate-50">
-                       <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-3xl text-[#34a4b8] overflow-hidden">
+                       <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-3xl text-[#34a4b8] overflow-hidden uppercase">
                          {profile.fullName?.charAt(0) || 'C'}
                        </div>
                        <h5 className="font-russo text-lg text-slate-800 uppercase leading-none">{profile.fullName || 'Advisor'}</h5>
@@ -358,7 +375,7 @@ export default function App() {
                     </div>
                     <div className="p-4 space-y-3">
                       {selectedIds.length === 0 && (
-                        <p className="text-center py-10 text-[10px] italic text-slate-400 font-medium">Your selections will appear here.</p>
+                        <p className="text-center py-10 text-[10px] italic text-slate-400 font-medium">Add experiences to view them here.</p>
                       )}
                       {selectedIds.map(id => {
                         const it = itineraries.find(i => i.id === id);
@@ -380,27 +397,30 @@ export default function App() {
             </div>
 
             <div className="flex flex-col justify-center space-y-6">
-               <div className="p-6 bg-slate-50 rounded-3xl space-y-4">
+               <div className="p-8 bg-slate-50 rounded-[2rem] space-y-6 border border-slate-100">
                  <h6 className="font-russo text-xs text-slate-800 uppercase tracking-widest">Share Your Link</h6>
-                 <div className="p-4 bg-white border border-slate-100 rounded-2xl flex items-center gap-3">
-                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate">cruisytravel.com/{profile.slug || 'advisor'}</div>
+                 <div className="p-5 bg-white border border-slate-100 rounded-3xl flex items-center gap-3">
+                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate tracking-wider lowercase">portal.cruisytravel.com/{profile.slug}</div>
                    <button 
                     onClick={() => { 
-                      const url = `https://cruisytravel.com/${profile.slug || 'advisor'}`;
+                      const url = `https://portal.cruisytravel.com/${profile.slug || 'advisor'}`;
                       navigator.clipboard.writeText(url); 
                       setCopyStatus(true); 
                       setTimeout(() => setCopyStatus(false), 2000); 
                     }}
-                    className="p-2 text-[#34a4b8] hover:bg-slate-100 rounded-lg transition-colors"
+                    className="p-3 text-[#34a4b8] bg-[#34a4b8]/5 hover:bg-[#34a4b8]/10 rounded-xl transition-colors"
                    >
                      {copyStatus ? <CheckCircle2 size={18} /> : <Clipboard size={18} />}
                    </button>
                  </div>
-                 <p className="text-[10px] text-slate-400 leading-relaxed italic">Your affiliate tag (?asn-ref={profile.slug || 'ID'}) is hardwired into every experience on this page.</p>
+                 <div className="p-5 bg-black/[0.02] rounded-2xl space-y-2">
+                    <p className="font-russo text-[10px] text-[#34a4b8] uppercase tracking-widest">Tracking Logic</p>
+                    <p className="text-[10px] text-slate-400 leading-relaxed font-medium">Your reference tag <strong>?asn-ref={profile.slug}</strong> is automatically appended to every booking button on this landing page.</p>
+                 </div>
                </div>
                
-               <button onClick={() => alert("Cruisy HQ notified! We will process your launch request.")} className="w-full bg-[#34a4b8] text-white py-5 rounded-3xl font-russo text-sm uppercase tracking-widest shadow-xl shadow-[#34a4b8]/20">
-                 Request Launch
+               <button onClick={() => alert("Launching portal request received. You will be notified via email.")} className="w-full bg-[#34a4b8] text-white py-6 rounded-[2rem] font-russo text-sm uppercase tracking-widest shadow-xl shadow-[#34a4b8]/30">
+                 Finalize & Launch
                </button>
             </div>
           </div>
@@ -411,7 +431,7 @@ export default function App() {
         <div className="flex items-center justify-center gap-6 opacity-30 grayscale mb-8">
            <img src="https://cruisytravel.com/wp-content/uploads/2024/01/cropped-20240120_025955_0000.png" className="h-10" />
         </div>
-        <p className="text-[11px] font-russo uppercase tracking-[0.6em] text-slate-300">Certified Cruisy Travel Advisor Network</p>
+        <p className="text-[11px] font-russo uppercase tracking-[0.5em] text-slate-300">Cruisy Travel Advisor Network</p>
       </footer>
 
       <style dangerouslySetInnerHTML={{ __html: `
