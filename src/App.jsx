@@ -199,7 +199,7 @@ export default function App() {
 
       {/* PROGRESS TRACKER */}
       <div className="w-full h-1.5 flex bg-white">
-        <div className={`h-full flex-1 transition-all duration-700 ${activeTab === 'setup' || selectedIds.length > 0 ? 'bg-[#34a4b8] shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
+        <div className={`h-full flex-1 transition-all duration-700 ${activeModal === 'profile' || selectedIds.length > 0 ? 'bg-[#34a4b8] shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
         <div className={`h-full flex-1 transition-all duration-700 ${selectedIds.length > 0 ? 'bg-[#34a4b8]/60 shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
         <div className={`h-full flex-1 transition-all duration-700 ${activeModal === 'preview' ? 'bg-[#34a4b8]/40 shadow-[0_0_10px_#34a4b8]' : 'bg-slate-200'}`} />
       </div>
@@ -238,7 +238,7 @@ export default function App() {
 
         {/* QUICK STATUS BAR */}
         <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between">
+            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                     <MapPin className="text-[#34a4b8]" />
                     <div>
@@ -247,7 +247,7 @@ export default function App() {
                     </div>
                 </div>
             </div>
-            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between">
+            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                     <CheckCircle2 className="text-[#34a4b8]" />
                     <div>
@@ -256,7 +256,7 @@ export default function App() {
                     </div>
                 </div>
             </div>
-            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between">
+            <div className="bg-white/60 p-8 rounded-[2rem] border border-white flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                     <Anchor className="text-[#34a4b8]" />
                     <div>
@@ -338,7 +338,7 @@ export default function App() {
                       ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-lg' : 'border-slate-50 bg-white hover:border-slate-100'}`}
                   >
                     <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative flex-shrink-0">
-                      {itinerary.img && <img src={itinerary.img} className="w-full h-full object-cover" />}
+                      {itinerary.img && <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} />}
                       {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CheckCircle2 size={32} /></div>}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -400,7 +400,7 @@ export default function App() {
                <div className="p-8 bg-slate-50 rounded-[2rem] space-y-6 border border-slate-100">
                  <h6 className="font-russo text-xs text-slate-800 uppercase tracking-widest">Share Your Link</h6>
                  <div className="p-5 bg-white border border-slate-100 rounded-3xl flex items-center gap-3">
-                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate tracking-wider lowercase">portal.cruisytravel.com/{profile.slug}</div>
+                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate tracking-wider lowercase">portal.cruisytravel.com/{profile.slug || 'advisor'}</div>
                    <button 
                     onClick={() => { 
                       const url = `https://portal.cruisytravel.com/${profile.slug || 'advisor'}`;
@@ -429,7 +429,7 @@ export default function App() {
 
       <footer className="mt-20 py-20 bg-white border-t border-slate-100 text-center">
         <div className="flex items-center justify-center gap-6 opacity-30 grayscale mb-8">
-           <img src="https://cruisytravel.com/wp-content/uploads/2024/01/cropped-20240120_025955_0000.png" className="h-10" />
+           <img src="https://cruisytravel.com/wp-content/uploads/2024/01/cropped-20240120_025955_0000.png" className="h-10" alt="Cruisy Travel" />
         </div>
         <p className="text-[11px] font-russo uppercase tracking-[0.5em] text-slate-300">Cruisy Travel Advisor Network</p>
       </footer>
