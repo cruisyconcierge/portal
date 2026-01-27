@@ -9,6 +9,7 @@ import {
  * CRUISY TRAVEL ADVISOR PORTAL
  * Brand Identity: Pacifico & Russo One
  * Theme: Island Vibes (Teal, White, Sand)
+ * Optimized for portal.cruisytravel.com
  */
 
 const DESTINATIONS = [
@@ -37,19 +38,25 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [copyStatus, setCopyStatus] = useState(false);
 
-  // Initial Sync
+  // Initial Sync from LocalStorage
   useEffect(() => {
     const saved = localStorage.getItem('cruisy_advisor_session');
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        setProfile(data.profile);
-        setSelectedIds(data.selectedIds || []);
-        setIsLoggedIn(true);
-      } catch (e) { console.error("Session reset"); }
+        if (data && data.profile) {
+          setProfile(data.profile);
+          setSelectedIds(data.selectedIds || []);
+          setIsLoggedIn(true);
+        }
+      } catch (e) { 
+        console.error("Session reset due to parse error", e); 
+        localStorage.removeItem('cruisy_advisor_session');
+      }
     }
   }, []);
 
+  // Save to LocalStorage
   useEffect(() => {
     if (isLoggedIn) {
       localStorage.setItem('cruisy_advisor_session', JSON.stringify({ profile, selectedIds }));
@@ -61,12 +68,21 @@ export default function App() {
     setError(null);
     try {
       const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${CPT_SLUG}?per_page=100&_embed`);
-      if (!response.ok) throw new Error("Could not sync with the itinerary database.");
+      
+      if (!response.ok) {
+        throw new Error(`Failed to sync: ${response.status} ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      
+      // Safety check: WordPress API can return an error object instead of an array
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid data format received from WordPress. Check if the 'itinerary' REST API is public.");
+      }
       
       const mapped = data.map(item => ({
         id: item.id,
-        name: item.title?.rendered || 'Activity',
+        name: item.title?.rendered || 'Untitled Experience',
         category: item.acf?.category || 'Experiences',
         destination: item.acf?.destination_tag || 'Key West',
         price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
@@ -74,9 +90,11 @@ export default function App() {
         bookingUrl: item.acf?.booking_url || item.link,
         img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
       }));
+      
       setItineraries(mapped);
     } catch (err) {
-      setError("Synchronizing with Cruisy Travel... Please ensure API access is open.");
+      console.error("API Fetch Error:", err);
+      setError(err.message || "Unable to sync with Cruisy Travel. Please ensure the WordPress REST API and CORS are configured.");
     } finally {
       setLoading(false);
     }
@@ -172,7 +190,7 @@ export default function App() {
         
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none">Advisor</span>
+            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none">Cruisy Ambassador</span>
             <span className="font-pacifico text-[#34a4b8] text-lg leading-none mt-1 lowercase">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-50 text-slate-400 hover:text-red-500 rounded-full transition-colors">
@@ -328,7 +346,8 @@ export default function App() {
             <div className="flex justify-center">
               <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl relative border-[8px] border-slate-800">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
-                  <div className="h-4 bg-gradient-to-r from-[#34a4b8] to-[#2c8ba0]" />
+                  {/* Clean Island Header */}
+                  <div className="h-4 bg-[#34a4b8]" />
                   <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col text-slate-900 text-center font-roboto">
                     <div className="p-8 bg-slate-50">
                        <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-3xl text-[#34a4b8] overflow-hidden">
@@ -338,6 +357,9 @@ export default function App() {
                        <p className="text-[10px] font-black text-[#34a4b8] uppercase tracking-widest mt-2">{profile.destination} Specialist</p>
                     </div>
                     <div className="p-4 space-y-3">
+                      {selectedIds.length === 0 && (
+                        <p className="text-center py-10 text-[10px] italic text-slate-400 font-medium">Your selections will appear here.</p>
+                      )}
                       {selectedIds.map(id => {
                         const it = itineraries.find(i => i.id === id);
                         if (!it) return null;
@@ -361,15 +383,20 @@ export default function App() {
                <div className="p-6 bg-slate-50 rounded-3xl space-y-4">
                  <h6 className="font-russo text-xs text-slate-800 uppercase tracking-widest">Share Your Link</h6>
                  <div className="p-4 bg-white border border-slate-100 rounded-2xl flex items-center gap-3">
-                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate">cruisytravel.com/{profile.slug}</div>
+                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate">cruisytravel.com/{profile.slug || 'advisor'}</div>
                    <button 
-                    onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }}
+                    onClick={() => { 
+                      const url = `https://cruisytravel.com/${profile.slug || 'advisor'}`;
+                      navigator.clipboard.writeText(url); 
+                      setCopyStatus(true); 
+                      setTimeout(() => setCopyStatus(false), 2000); 
+                    }}
                     className="p-2 text-[#34a4b8] hover:bg-slate-100 rounded-lg transition-colors"
                    >
                      {copyStatus ? <CheckCircle2 size={18} /> : <Clipboard size={18} />}
                    </button>
                  </div>
-                 <p className="text-[10px] text-slate-400 leading-relaxed italic">Your affiliate tag (?asn-ref={profile.slug}) is hardwired into every experience on this page.</p>
+                 <p className="text-[10px] text-slate-400 leading-relaxed italic">Your affiliate tag (?asn-ref={profile.slug || 'ID'}) is hardwired into every experience on this page.</p>
                </div>
                
                <button onClick={() => alert("Cruisy HQ notified! We will process your launch request.")} className="w-full bg-[#34a4b8] text-white py-5 rounded-3xl font-russo text-sm uppercase tracking-widest shadow-xl shadow-[#34a4b8]/20">
