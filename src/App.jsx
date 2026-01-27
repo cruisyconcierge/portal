@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Palmtree, User, MapPin, Eye, Share2, Plus, Minus,
-  ExternalLink, ChevronRight, Clipboard, Send, Loader2, AlertCircle,
-  LogOut, CheckCircle2, Navigation, Ship, Anchor, Waves, Info, X, Settings
+  ExternalLink, ChevronRight, Clipboard, Send, Loader2, CircleAlert,
+  LogOut, CircleCheck, Navigation, Ship, Anchor, Waves, Info, X, Settings
 } from 'lucide-react';
 
 /**
@@ -37,18 +37,19 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [copyStatus, setCopyStatus] = useState(false);
 
-  // Initial Sync from LocalStorage to keep the Advisor logged in
+  // Initial Sync from LocalStorage
   useEffect(() => {
     const saved = localStorage.getItem('cruisy_advisor_session');
     if (saved) {
       try {
         const data = JSON.parse(saved);
         if (data && data.profile) {
-          setProfile(data.profile);
-          setSelectedIds(data.selectedIds || []);
+          setProfile(prev => ({ ...prev, ...data.profile }));
+          setSelectedIds(Array.isArray(data.selectedIds) ? data.selectedIds : []);
           setIsLoggedIn(true);
         }
       } catch (e) { 
+        console.error("Session parse error", e);
         localStorage.removeItem('cruisy_advisor_session');
       }
     }
@@ -91,7 +92,7 @@ export default function App() {
       setItineraries(mapped);
     } catch (err) {
       console.error("API Fetch Error:", err);
-      setError("Syncing with Cruisy database... Ensure CORS and REST API are active.");
+      setError("Syncing with Cruisy database... Please check CORS and REST API settings.");
     } finally {
       setLoading(false);
     }
@@ -108,6 +109,7 @@ export default function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('cruisy_advisor_session');
+    setSelectedIds([]);
   };
 
   // Reusable Modal UI Component
@@ -142,21 +144,21 @@ export default function App() {
                   <span className="font-pacifico text-4xl text-slate-800 lowercase">Cruisy</span>
                   <span className="font-russo text-3xl text-[#34a4b8] uppercase">travel</span>
                 </h1>
-                <p className="font-russo text-[10px] text-slate-400 tracking-[0.4em] uppercase">Advisor Portal</p>
+                <p className="font-russo text-xs text-slate-400 tracking-[0.4em] uppercase">Advisor Portal</p>
               </div>
 
               <div className="space-y-4">
                 <input 
                   className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none transition-all text-slate-800 font-bold text-center"
                   placeholder="Advisor ID"
-                  value={profile.slug}
+                  value={profile.slug || ''}
                   onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})}
                 />
                 <input 
                   type="password"
                   className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none transition-all text-slate-800 font-medium text-center"
                   placeholder="Password"
-                  value={profile.password}
+                  value={profile.password || ''}
                   onChange={e => setProfile({...profile, password: e.target.value})}
                 />
                 <button 
@@ -187,7 +189,7 @@ export default function App() {
         
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none">Cruisy Advisor</span>
+            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none">Cruisy Ambassador</span>
             <span className="font-pacifico text-[#34a4b8] text-lg leading-none mt-1 lowercase">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200">
@@ -222,14 +224,14 @@ export default function App() {
                     <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[#34a4b8] shadow-sm group-hover:scale-110 transition-transform">
                         <Palmtree size={24} />
                     </div>
-                    <span className="font-russo text-[10px] uppercase tracking-[0.2em] text-slate-400 mt-2">Inventory</span>
+                    <span className="font-russo text-[10px] uppercase tracking-[0.2em] text-slate-400 mt-2">Curate</span>
                     <span className="font-russo text-xs text-slate-800 uppercase text-center">Itinerary Select</span>
                 </button>
                 <button onClick={() => setActiveModal('preview')} className="sm:col-span-2 p-8 bg-[#34a4b8] rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl shadow-[#34a4b8]/20 group">
                     <Eye className="text-white group-hover:scale-110 transition-transform" size={28} />
                     <div className="flex flex-col items-start text-left">
                         <span className="font-russo text-[10px] uppercase tracking-[0.2em] text-white/70">Advisor View</span>
-                        <span className="font-russo text-lg text-white uppercase tracking-tight">Live Preview & Launch</span>
+                        <span className="font-russo text-lg text-white uppercase tracking-tight">Live Preview & Share</span>
                     </div>
                 </button>
             </div>
@@ -243,16 +245,16 @@ export default function App() {
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Base Port</p>
-                    <p className="font-russo text-xl text-slate-800 uppercase">{profile.destination}</p>
+                    <p className="font-russo text-xl text-slate-800 uppercase">{profile.destination || 'N/A'}</p>
                 </div>
             </div>
             <div className="bg-white/60 backdrop-blur p-10 rounded-[3rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-16 h-16 rounded-3xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
-                    <CheckCircle2 size={32} />
+                    <CircleCheck size={32} />
                 </div>
                 <div>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Curated Items</p>
-                    <p className="font-russo text-xl text-slate-800 uppercase">{selectedIds.length} Experiences</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Itinerary</p>
+                    <p className="font-russo text-xl text-slate-800 uppercase">{selectedIds.length} Selections</p>
                 </div>
             </div>
             <div className="bg-white/60 backdrop-blur p-10 rounded-[3rem] border border-white flex items-center gap-6 shadow-sm">
@@ -276,7 +278,7 @@ export default function App() {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Display Name</label>
               <input 
                 className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800"
-                value={profile.fullName}
+                value={profile.fullName || ''}
                 onChange={e => setProfile({...profile, fullName: e.target.value})}
               />
             </div>
@@ -302,7 +304,7 @@ export default function App() {
               <textarea 
                 rows="4"
                 className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-sm leading-relaxed text-slate-800 font-medium"
-                value={profile.bio}
+                value={profile.bio || ''}
                 onChange={e => setProfile({...profile, bio: e.target.value})}
               />
             </div>
@@ -312,14 +314,14 @@ export default function App() {
       )}
 
       {activeModal === 'itinerary' && (
-        <Modal title="Itinerary Management" onClose={() => setActiveModal(null)}>
+        <Modal title="Select Experiences" onClose={() => setActiveModal(null)}>
           <div className="space-y-6">
             <div className="p-6 bg-[#34a4b8]/5 rounded-[2rem] flex items-center gap-4 border border-[#34a4b8]/10">
               <div className="bg-[#34a4b8] p-2 rounded-xl text-white">
                 <Info size={24} />
               </div>
               <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                Curate custom activities for <strong>{profile.destination}</strong>. Your tracking tag is automatically injected.
+                Choose the activities for your custom <strong>{profile.destination}</strong> itinerary. Your tracking ref is automatically attached.
               </p>
             </div>
             
@@ -338,7 +340,7 @@ export default function App() {
                   >
                     <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative flex-shrink-0 shadow-sm border border-white">
                       {itinerary.img && <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} />}
-                      {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CheckCircle2 size={32} /></div>}
+                      {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={32} /></div>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-[9px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
@@ -363,7 +365,7 @@ export default function App() {
               <div className="w-[300px] h-[620px] bg-slate-900 rounded-[3.5rem] p-3 shadow-2xl relative border-[8px] border-slate-800">
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col shadow-inner">
                   <div className="h-4 bg-[#34a4b8]" />
-                  <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col text-slate-900 text-center font-roboto">
+                  <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col text-slate-900 text-center">
                     <div className="p-8 bg-slate-50">
                        <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-3xl text-[#34a4b8] shadow-md uppercase">
                          {profile.fullName?.charAt(0) || 'C'}
@@ -373,7 +375,7 @@ export default function App() {
                     </div>
                     <div className="p-5 space-y-3">
                       {selectedIds.length === 0 && (
-                        <p className="text-center py-10 text-[11px] italic text-slate-300 font-medium">Add experiences to populate preview.</p>
+                        <p className="text-center py-10 text-[11px] italic text-slate-300 font-medium">No experiences added yet.</p>
                       )}
                       {selectedIds.map(id => {
                         const it = itineraries.find(i => i.id === id);
@@ -408,11 +410,11 @@ export default function App() {
                     }}
                     className="p-3 text-[#34a4b8] bg-[#34a4b8]/5 hover:bg-[#34a4b8]/10 rounded-xl transition-colors"
                    >
-                     {copyStatus ? <CheckCircle2 size={20} /> : <Clipboard size={20} />}
+                     {copyStatus ? <CircleCheck size={20} /> : <Clipboard size={20} />}
                    </button>
                  </div>
                  <div className="p-6 bg-[#34a4b8]/5 rounded-2xl space-y-3 border border-[#34a4b8]/5">
-                    <p className="font-russo text-[10px] text-[#34a4b8] uppercase tracking-widest flex items-center gap-2">
+                    <p className="font-russo text-[10px] text-[#34a4b8] uppercase tracking-widest flex items-center gap-2 uppercase">
                         <Waves size={14} /> Tracking Active
                     </p>
                     <p className="text-[11px] text-slate-400 leading-relaxed font-medium">Your tag <strong>?asn-ref={profile.slug}</strong> is hardwired to every booking link on your custom portal.</p>
