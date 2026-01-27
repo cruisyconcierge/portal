@@ -1,5 +1,5 @@
 {
-  "name": "cruisy-portal",
+  "name": "cruisy-advisor-portal",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -16,6 +16,8 @@
     "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
@@ -23,34 +25,3 @@
     "vite": "^5.4.8"
   }
 }
-
-### 2. `index.html`
-Make sure the script source points to `/src/main.jsx`.
-```html
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Advisor Portal | Cruisy Travel</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
-
-### 3. `src/main.jsx`
-```javascript
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-
-Updating your GitHub repository with these versions (especially the `App.jsx` in Canvas) should resolve the white screen. The error was purely a typo in an icon name (`Palm` instead of `Palmtree`) which prevents the code from bundling. Everything is now fully aligned with your **portal.cruisytravel.com** branding.
