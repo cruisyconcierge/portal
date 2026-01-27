@@ -2,11 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Buoy Fonts and Styles */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&family=Russo+One&display=swap');
-
 :root {
-  --cruisy-teal: #34a4b8;
+  --brand-teal: #34a4b8;
 }
 
 body {
@@ -14,22 +11,46 @@ body {
   font-family: 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
 }
 
+/* Custom Typography Utilities for the Advisor Portal */
+.font-pacifico {
+  font-family: 'Pacifico', cursive;
+}
+
+.font-russo {
+  font-family: 'Russo One', sans-serif;
+}
+
+/* Hide scrollbar for clean dashboard containers */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
+/* Entrance animation for dashboard elements */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
 .animate-in {
   animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Island glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
