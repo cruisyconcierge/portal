@@ -23,7 +23,7 @@ const BRAND_TEAL = '#34a4b8';
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/20 shadow-black/50">
+    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white">
       <div className="p-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
         <h3 className="font-russo text-lg text-slate-800 uppercase tracking-tight">{title}</h3>
         <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
@@ -91,35 +91,24 @@ export default function App() {
   const fetchItineraries = async () => {
     setLoading(true);
     setError(null);
-    const endpoints = ['itinerary', 'itineraries'];
-    let success = false;
-
-    for (const slug of endpoints) {
-      if (success) break;
-      try {
-        const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${slug}?per_page=100&_embed`);
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) {
-            const mapped = data.map(item => ({
-              id: item.id,
-              name: item.title?.rendered || 'Untitled Activity',
-              description: item.content?.rendered || '', 
-              category: item.acf?.category || 'Experiences',
-              destinationTag: item.acf?.destination_tag || '',
-              price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
-              duration: item.acf?.duration || 'Flexible',
-              bookingUrl: item.acf?.booking_url || item.link,
-              img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
-            }));
-            setItineraries(mapped);
-            success = true;
-          }
-        }
-      } catch (err) { console.warn(`Failed fetch on /${slug}:`, err); }
-    }
-
-    if (!success) { setError("WordPress API Error (404). Check 'itinerary' CPT REST visibility."); }
+    try {
+      const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/itinerary?per_page=100&_embed`);
+      if (response.ok) {
+        const data = await response.json();
+        const mapped = data.map(item => ({
+          id: item.id,
+          name: item.title?.rendered || 'Untitled Activity',
+          description: item.content?.rendered || '', 
+          category: item.acf?.category || 'Experiences',
+          destinationTag: item.acf?.destination_tag || '',
+          price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
+          duration: item.acf?.duration || 'Flexible',
+          bookingUrl: item.acf?.booking_url || item.link,
+          img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
+        }));
+        setItineraries(mapped);
+      }
+    } catch (err) { console.warn("API Error:", err); }
     setLoading(false);
   };
 
@@ -131,38 +120,21 @@ export default function App() {
   const triggerSyncWebhook = async (advisorData) => {
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
-    // Safety Check: WordPress REQUIRES a Title (fullName)
     if (!advisorData.fullName || advisorData.fullName.trim() === "") {
-      alert("Please enter a Display Name in Settings before syncing.");
+      alert("Please enter a Display Name in Settings.");
       setActiveModal('profile');
       return false;
     }
 
-    // Prepare full object data for the JSON gallery/display on WP
-    const experienceData = selectedIds.map(id => {
-      const item = itineraries.find(it => it.id === id);
-      return {
-        id: id,
-        title: item?.name || 'Experience',
-        image: item?.img || '',
-        link: item?.bookingUrl || '',
-        price: item?.price || ''
-      };
-    });
-
+    // RESTORED STABLE PAYLOAD (Exactly what we had when it was working)
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug.trim().toLowerCase(),
       bio: advisorData.bio,
       destination: advisorData.destination,
-      // We send both string and array for maximum mapping flexibility in Make.com
-      selected_ids_string: selectedIds.join(','), 
-      selected_ids_array: selectedIds, 
-      experiences_json: JSON.stringify(experienceData),
-      timestamp: new Date().toISOString()
+      selected_experiences: selectedIds.join(','), // Simple comma-separated string
+      registration_date: new Date().toISOString()
     };
-
-    console.log("CRUISY SYNC ATTEMPT:", payload);
 
     setLoading(true);
     try {
@@ -173,23 +145,20 @@ export default function App() {
       });
       
       if (response.ok) {
-        // Visual confirmation toast
         const confirmBox = document.createElement('div');
         confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
         confirmBox.innerText = "Cruisy Portal Updated Successfully!";
         document.body.appendChild(confirmBox);
         setTimeout(() => confirmBox.remove(), 3000);
+        setLoading(false);
+        return true;
       } else {
-        const errorText = await response.text();
-        throw new Error(`Sync Error (${response.status})`);
+        throw new Error(`Server Error (${response.status})`);
       }
-      
-      setLoading(false);
-      return true;
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed: ${e.message}. Ensure your Make.com Scenario is active and toggled ON.`);
+      alert(`Sync failed: ${e.message}. Ensure Make.com Scenario is ON.`);
       return false;
     }
   };
@@ -198,20 +167,14 @@ export default function App() {
     e.preventDefault();
     if (authMode === 'signup') {
       if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
-      // First save locally
-      localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
-      localStorage.setItem('cruisy_current_session_slug', profile.slug);
-      // Then sync to WP
       const success = await triggerSyncWebhook(profile);
       if (success) setIsLoggedIn(true);
     } else {
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
       if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          setProfile(parsed.profile);
-          setSelectedIds(parsed.selectedIds || []);
-        } catch (e) { /* fallback */ }
+        const parsed = JSON.parse(savedData);
+        setProfile(parsed.profile);
+        setSelectedIds(parsed.selectedIds || []);
       }
       setIsLoggedIn(true);
     }
@@ -241,7 +204,7 @@ export default function App() {
         />
         
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
-          <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50 shadow-black/50">
+          <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
             
             <div className="pt-10 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
@@ -399,13 +362,6 @@ export default function App() {
                  <p className="text-sm font-medium text-slate-600">Select the best activities for <strong>{profile.destination}</strong> travelers.</p>
             </div>
             <div className="grid grid-cols-1 gap-4">
-                {error && (
-                  <div className="p-6 bg-red-50 border border-red-100 rounded-[2.5rem] text-center space-y-4 shadow-sm">
-                    <CircleAlert className="mx-auto text-red-500" size={40} />
-                    <p className="text-sm text-red-600 font-bold leading-relaxed">{error}</p>
-                  </div>
-                )}
-                
                 {itineraries
                   .filter(exp => exp.destinationTag?.toLowerCase().includes(profile.destination.toLowerCase()) || exp.name.toLowerCase().includes(profile.destination.toLowerCase()))
                   .map((itinerary) => (
@@ -435,7 +391,7 @@ export default function App() {
         <Modal title="Digital Advisor Preview" onClose={() => setActiveModal(null)}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
             <div className="flex justify-center">
-              <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3.5rem] p-2.5 shadow-2xl relative border-[8px] border-slate-800 shadow-black/60">
+              <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3.5rem] p-2.5 shadow-2xl relative border-[8px] border-slate-800">
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col">
                   {/* BUOY STRIPE */}
                   <div className="h-4 bg-[#34a4b8]" />
