@@ -9,7 +9,7 @@ import {
  * ADVISOR PORTAL - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
  * Branding: Ultra-Bold "Cruisy" with Capital C
- * Automation: Zapier Webhook -> Advisor CPT (ACF: selected_experiences)
+ * Automation: Zapier Webhook -> Advisor CPT
  */
 
 const DESTINATIONS = [
@@ -18,7 +18,6 @@ const DESTINATIONS = [
 
 const WP_BASE_URL = 'https://cruisytravel.com';
 const ITINERARY_CPT = 'itinerary'; // Source for activities
-const ADVISOR_CPT = 'advisor';    // Destination for new profiles
 const BRAND_TEAL = '#34a4b8';
 
 export default function App() {
@@ -66,19 +65,21 @@ export default function App() {
 
   const fetchItineraries = async () => {
     setLoading(true);
+    setError(null);
     try {
+      // We fetch the CPT 'itinerary' and include _embed to get images
       const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${ITINERARY_CPT}?per_page=100&_embed`);
       const data = await response.json();
       
-      console.log("WP Data Received:", data); // Debugging: See what WP is sending
+      console.log("Advisor Portal Data Sync:", data); 
 
       if (Array.isArray(data)) {
         const mapped = data.map(item => ({
           id: item.id,
           name: item.title?.rendered || 'Untitled Activity',
+          description: item.content?.rendered || '', // Used for backup destination matching
           category: item.acf?.category || 'Experiences',
-          // Handle cases where destination might be a string, array, or slug
-          destination: item.acf?.destination_tag || 'Uncategorized',
+          destinationTag: item.acf?.destination_tag || '',
           price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
           duration: item.acf?.duration || 'Flexible',
           bookingUrl: item.acf?.booking_url || item.link,
@@ -86,11 +87,11 @@ export default function App() {
         }));
         setItineraries(mapped);
       } else {
-        setError("Could not find any itineraries. Ensure the CPT is set to 'Show in REST API'.");
+        setError("API connection established, but no itineraries were returned. Check REST API visibility settings for the 'itinerary' CPT.");
       }
     } catch (err) {
-      console.error("Sync Error:", err);
-      setError("Sync Error: Check CORS settings on WordPress.");
+      console.error("Fetch Error:", err);
+      setError("Unable to connect to WordPress. Please check your CORS plugin settings.");
     } finally {
       setLoading(false);
     }
@@ -102,12 +103,9 @@ export default function App() {
 
   /**
    * ZAPIER WEBHOOK INTEGRATION
-   * Sends Advisor data to Zapier to create the Advisor CPT Page.
-   * Field 'selected_experiences' is mapped to your ACF field of the same name.
    */
   const triggerSignupWebhook = async (advisorData) => {
     const zapierUrl = "https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/"; 
-    
     try {
       await fetch(zapierUrl, {
         method: 'POST',
@@ -117,13 +115,13 @@ export default function App() {
           slug: advisorData.slug,
           bio: advisorData.bio,
           destination: advisorData.destination,
-          selected_experiences: selectedIds.join(','), // Mapped to your ACF field
+          selected_experiences: selectedIds.join(','),
           registration_date: new Date().toISOString()
         }),
       });
       return true;
     } catch (e) {
-      console.error("Zapier Webhook Error", e);
+      console.error("Zapier Error", e);
       return false;
     }
   };
@@ -131,7 +129,7 @@ export default function App() {
   const handleAuth = async (e) => {
     e.preventDefault();
     if (authMode === 'signup') {
-      if (!profile.fullName || !profile.slug) return alert("Please fill in all fields.");
+      if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
       setLoading(true);
       await triggerSignupWebhook(profile);
       setLoading(false);
@@ -175,13 +173,13 @@ export default function App() {
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
           <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white">
             
-            {/* BRANDING: Capital C and Scaled Up Significantly */}
+            {/* BRANDING: Corrected Size and Capitalization */}
             <div className="pt-16 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
-                <span className="font-pacifico text-8xl md:text-[8.5rem] text-slate-800 leading-[0.7] tracking-tight">Cruisy</span>
+                <span className="font-pacifico text-8xl md:text-[9.5rem] text-slate-800 leading-[0.65] tracking-tight">Cruisy</span>
                 <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-tighter mt-4">travel</span>
               </h1>
-              <p className="font-russo text-[11px] text-slate-400 tracking-[0.5em] uppercase mt-10">Travel Advisor Portal</p>
+              <p className="font-russo text-[11px] text-slate-400 tracking-[0.5em] uppercase mt-12 font-bold">Travel Advisor Portal</p>
             </div>
 
             <div className="p-10 space-y-8">
@@ -194,10 +192,10 @@ export default function App() {
                 {authMode === 'signup' && (
                   <>
                     <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Full Display Name" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
-                    <textarea className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Advisor Professional Bio" rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                    <textarea className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Short Bio (visible on your page)" rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
-                <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Username / URL Slug" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+                <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
                 <input type="password" required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 placeholder:text-slate-300" placeholder="Set Access Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
                 
                 <button type="submit" disabled={loading} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo text-xl shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-4">
@@ -217,14 +215,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f1f5f9] font-sans text-slate-800">
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-8 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="font-pacifico text-4xl text-slate-800 leading-none">Cruisy</span>
+        <div className="flex items-center gap-4">
+          <span className="font-pacifico text-4xl md:text-5xl text-slate-800 leading-none">Cruisy</span>
           <span className="font-russo text-3xl text-[#34a4b8] uppercase leading-none tracking-tighter">travel</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
             <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Advisor Status</span>
-            <span className="font-pacifico text-[#34a4b8] text-xl leading-none mt-1">{profile.slug}</span>
+            <span className="font-pacifico text-[#34a4b8] text-2xl leading-none mt-1 uppercase">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200"><LogOut size={20} /></button>
         </div>
@@ -235,8 +233,8 @@ export default function App() {
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none"><Ship size={400} /></div>
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight">Advisor<br/><span className="text-[#34a4b8]">Control</span></h2>
-                <p className="text-slate-500 font-medium text-lg leading-relaxed">
-                  Curate experiences and manage your official advisor landing page. <span className="text-[#34a4b8] font-bold">cruisytravel.com/{profile.slug || 'username'}</span>
+                <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
+                  Curate experiences and manage your official advisor landing page. <span className="text-[#34a4b8] font-bold">cruisytravel.com/{profile.slug || 'matt'}</span>
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
@@ -251,8 +249,8 @@ export default function App() {
                 <button onClick={() => setActiveModal('preview')} className="sm:col-span-2 p-8 bg-[#34a4b8] rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl shadow-[#34a4b8]/20 group">
                     <Eye className="text-white group-hover:scale-110 transition-transform" size={32} />
                     <div className="flex flex-col items-start">
-                         <span className="font-russo text-lg text-white uppercase tracking-tight leading-none">Live View</span>
-                         <span className="text-[10px] text-white/60 font-black uppercase tracking-widest">Digital Card</span>
+                         <span className="font-russo text-xl text-white uppercase tracking-tight leading-none">Live View</span>
+                         <span className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1">Digital Card</span>
                     </div>
                 </button>
             </div>
@@ -308,7 +306,7 @@ export default function App() {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Professional Bio</label>
-              <textarea rows="4" className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 outline-none text-slate-800" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+              <textarea rows="4" className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg shadow-[#34a4b8]/20">Update Advisor Profile</button>
           </div>
@@ -326,26 +324,38 @@ export default function App() {
                 
                 {itineraries
                   .filter(exp => {
-                    const profileDest = profile.destination.toLowerCase().replace(/\s+/g, '-');
-                    const expDest = String(exp.destination).toLowerCase().replace(/\s+/g, '-');
-                    return expDest.includes(profileDest) || profileDest.includes(expDest);
+                    const profileDest = profile.destination.toLowerCase();
+                    // We check ACF tag, AND we scan the description/content for the port name
+                    const matchInTag = String(exp.destinationTag).toLowerCase().includes(profileDest);
+                    const matchInContent = String(exp.description).toLowerCase().includes(profileDest);
+                    const matchInName = String(exp.name).toLowerCase().includes(profileDest);
+                    
+                    return matchInTag || matchInContent || matchInName;
                   })
                   .map((itinerary) => (
-                  <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-5 rounded-[2.5rem] border-2 flex items-center gap-6 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
-                      <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm">
-                      {itinerary.img && <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} />}
+                  <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-5 rounded-[2.5rem] border-2 flex items-center gap-6 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-md' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
+                      <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm border border-slate-200">
+                      {itinerary.img ? (
+                        <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">🚢</div>
+                      )}
                       {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={32} /></div>}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                       <span className="text-[9px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
-                      <h4 className="font-russo text-sm uppercase text-slate-800 leading-tight">{itinerary.name}</h4>
+                      <h4 className="font-russo text-sm uppercase text-slate-800 leading-tight truncate">{itinerary.name}</h4>
                       <p className="text-[#34a4b8] font-bold text-sm mt-1">{itinerary.price}</p>
                       </div>
                   </div>
                 ))}
                 
-                {!loading && itineraries.filter(exp => String(exp.destination).toLowerCase().includes(profile.destination.toLowerCase())).length === 0 && (
-                  <div className="py-10 text-center text-slate-400 italic">No experiences found for {profile.destination}. Try changing your port or checking WordPress tags.</div>
+                {!loading && itineraries.filter(exp => (String(exp.destinationTag).toLowerCase().includes(profile.destination.toLowerCase()) || String(exp.description).toLowerCase().includes(profile.destination.toLowerCase()))).length === 0 && (
+                  <div className="py-20 text-center text-slate-400 italic">
+                    <Ship className="mx-auto mb-4 opacity-10" size={48} />
+                    <p>No experiences found for {profile.destination}.</p>
+                    <p className="text-[10px] mt-2 font-bold uppercase tracking-widest">Cruisy Data Engine Standby</p>
+                  </div>
                 )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-6 shadow-lg shadow-[#34a4b8]/20">Confirm Selections</button>
@@ -361,7 +371,7 @@ export default function App() {
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col">
                   <div className="h-4 bg-[#34a4b8]" />
                   <div className="p-8 text-center bg-slate-50">
-                    <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-5xl text-slate-800 shadow-md">{profile.fullName?.charAt(0) || 'C'}</div>
+                    <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-6xl text-slate-800 shadow-md">{profile.fullName?.charAt(0) || 'C'}</div>
                     <h5 className="font-russo text-xl uppercase text-slate-800 leading-none">{profile.fullName || 'Advisor'}</h5>
                     <p className="text-[10px] font-black text-[#34a4b8] uppercase mt-3 tracking-widest">{profile.destination} Specialist</p>
                   </div>
