@@ -69,21 +69,28 @@ export default function App() {
     try {
       const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${ITINERARY_CPT}?per_page=100&_embed`);
       const data = await response.json();
+      
+      console.log("WP Data Received:", data); // Debugging: See what WP is sending
+
       if (Array.isArray(data)) {
         const mapped = data.map(item => ({
           id: item.id,
           name: item.title?.rendered || 'Untitled Activity',
           category: item.acf?.category || 'Experiences',
-          destination: item.acf?.destination_tag || 'Key West',
+          // Handle cases where destination might be a string, array, or slug
+          destination: item.acf?.destination_tag || 'Uncategorized',
           price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
           duration: item.acf?.duration || 'Flexible',
           bookingUrl: item.acf?.booking_url || item.link,
           img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
         }));
         setItineraries(mapped);
+      } else {
+        setError("Could not find any itineraries. Ensure the CPT is set to 'Show in REST API'.");
       }
     } catch (err) {
       console.error("Sync Error:", err);
+      setError("Sync Error: Check CORS settings on WordPress.");
     } finally {
       setLoading(false);
     }
@@ -102,19 +109,19 @@ export default function App() {
     const zapierUrl = "https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/"; 
     
     try {
-      const response = await fetch(zapierUrl, {
+      await fetch(zapierUrl, {
         method: 'POST',
-        // Send as a JSON string containing the IDs of selected itineraries
+        mode: 'no-cors',
         body: JSON.stringify({
           fullName: advisorData.fullName,
           slug: advisorData.slug,
           bio: advisorData.bio,
           destination: advisorData.destination,
-          selected_experiences: selectedIds.join(','), // Comma separated IDs for ACF
+          selected_experiences: selectedIds.join(','), // Mapped to your ACF field
           registration_date: new Date().toISOString()
         }),
       });
-      return true; // We return true because Zapier 'no-cors' mode doesn't return readable status
+      return true;
     } catch (e) {
       console.error("Zapier Webhook Error", e);
       return false;
@@ -171,7 +178,7 @@ export default function App() {
             {/* BRANDING: Capital C and Scaled Up Significantly */}
             <div className="pt-16 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
-                <span className="font-pacifico text-8xl md:text-[8rem] text-slate-800 leading-[0.75] tracking-tight">Cruisy</span>
+                <span className="font-pacifico text-8xl md:text-[8.5rem] text-slate-800 leading-[0.7] tracking-tight">Cruisy</span>
                 <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-tighter mt-4">travel</span>
               </h1>
               <p className="font-russo text-[11px] text-slate-400 tracking-[0.5em] uppercase mt-10">Travel Advisor Portal</p>
@@ -228,7 +235,9 @@ export default function App() {
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none"><Ship size={400} /></div>
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight">Advisor<br/><span className="text-[#34a4b8]">Control</span></h2>
-                <p className="text-slate-500 font-medium text-lg">Curate itineraries and manage your official /<span className="font-bold text-slate-800">{profile.slug}</span> advisor landing page.</p>
+                <p className="text-slate-500 font-medium text-lg leading-relaxed">
+                  Curate experiences and manage your official advisor landing page. <span className="text-[#34a4b8] font-bold">cruisytravel.com/{profile.slug || 'username'}</span>
+                </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
                 <button onClick={() => setActiveModal('profile')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg">
@@ -313,19 +322,31 @@ export default function App() {
                  <p className="text-sm font-medium text-slate-600">Select the best activities for <strong>{profile.destination}</strong> travelers.</p>
             </div>
             <div className="grid grid-cols-1 gap-4">
-                {itineraries.filter(exp => exp.destination === profile.destination).map((itinerary) => (
-                <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-5 rounded-[2.5rem] border-2 flex items-center gap-6 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
-                    <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm">
-                    {itinerary.img && <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} />}
-                    {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={32} /></div>}
-                    </div>
-                    <div className="flex-1">
-                    <span className="text-[9px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
-                    <h4 className="font-russo text-sm uppercase text-slate-800 leading-tight">{itinerary.name}</h4>
-                    <p className="text-[#34a4b8] font-bold text-sm mt-1">{itinerary.price}</p>
-                    </div>
-                </div>
+                {error && <div className="p-4 text-red-500 bg-red-50 rounded-xl text-center text-xs font-bold">{error}</div>}
+                
+                {itineraries
+                  .filter(exp => {
+                    const profileDest = profile.destination.toLowerCase().replace(/\s+/g, '-');
+                    const expDest = String(exp.destination).toLowerCase().replace(/\s+/g, '-');
+                    return expDest.includes(profileDest) || profileDest.includes(expDest);
+                  })
+                  .map((itinerary) => (
+                  <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-5 rounded-[2.5rem] border-2 flex items-center gap-6 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
+                      <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm">
+                      {itinerary.img && <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} />}
+                      {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={32} /></div>}
+                      </div>
+                      <div className="flex-1">
+                      <span className="text-[9px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
+                      <h4 className="font-russo text-sm uppercase text-slate-800 leading-tight">{itinerary.name}</h4>
+                      <p className="text-[#34a4b8] font-bold text-sm mt-1">{itinerary.price}</p>
+                      </div>
+                  </div>
                 ))}
+                
+                {!loading && itineraries.filter(exp => String(exp.destination).toLowerCase().includes(profile.destination.toLowerCase())).length === 0 && (
+                  <div className="py-10 text-center text-slate-400 italic">No experiences found for {profile.destination}. Try changing your port or checking WordPress tags.</div>
+                )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-6 shadow-lg shadow-[#34a4b8]/20">Confirm Selections</button>
           </div>
