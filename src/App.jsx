@@ -38,7 +38,7 @@ const Modal = ({ title, children, onClose }) => (
 export default function App() {
   // --- STATE ---
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('cruisy_advisor_session') !== null;
+    return localStorage.getItem('cruisy_current_session_slug') !== null;
   });
 
   const [authMode, setAuthMode] = useState('login'); 
@@ -48,23 +48,29 @@ export default function App() {
   const [itineraries, setItineraries] = useState([]);
   
   const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem('cruisy_advisor_session');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        return data.profile || { fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' };
-      } catch (e) { return { fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' }; }
+    const activeSlug = localStorage.getItem('cruisy_current_session_slug');
+    if (activeSlug) {
+      const savedData = localStorage.getItem(`cruisy_user_${activeSlug}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          return parsed.profile || { fullName: '', slug: activeSlug, bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' };
+        } catch (e) { return { fullName: '', slug: activeSlug, bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' }; }
+      }
     }
     return { fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' };
   });
   
   const [selectedIds, setSelectedIds] = useState(() => {
-    const saved = localStorage.getItem('cruisy_advisor_session');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        return Array.isArray(data.selectedIds) ? data.selectedIds : [];
-      } catch (e) { return []; }
+    const activeSlug = localStorage.getItem('cruisy_current_session_slug');
+    if (activeSlug) {
+      const savedData = localStorage.getItem(`cruisy_user_${activeSlug}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          return Array.isArray(parsed.selectedIds) ? parsed.selectedIds : [];
+        } catch (e) { return []; }
+      }
     }
     return [];
   });
@@ -72,9 +78,11 @@ export default function App() {
   const [copyStatus, setCopyStatus] = useState(false);
 
   // --- PERSISTENCE ---
+  // Save current profile and selections to a user-specific key so it persists after logout
   useEffect(() => {
-    if (isLoggedIn) {
-      localStorage.setItem('cruisy_advisor_session', JSON.stringify({ profile, selectedIds }));
+    if (isLoggedIn && profile.slug) {
+      localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
+      localStorage.setItem('cruisy_current_session_slug', profile.slug);
     }
   }, [profile, selectedIds, isLoggedIn]);
 
@@ -150,7 +158,16 @@ export default function App() {
       setLoading(false);
       setIsLoggedIn(true);
     } else {
-      if (profile.slug) setIsLoggedIn(true);
+      // Login mode: Check if user data exists to restore it
+      const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setProfile(parsed.profile);
+          setSelectedIds(parsed.selectedIds || []);
+        } catch (e) { /* fallback to current inputs */ }
+      }
+      setIsLoggedIn(true);
     }
   };
 
@@ -160,8 +177,9 @@ export default function App() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('cruisy_advisor_session');
-    setSelectedIds([]);
+    localStorage.removeItem('cruisy_current_session_slug');
+    // We do NOT clear selectedIds state here so they remain if the user logs back in during same runtime,
+    // but clear them if you want a totally fresh state for next login attempt
   };
 
   // --- LOGIN / SIGNUP VIEW ---
@@ -174,40 +192,40 @@ export default function App() {
           style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} 
         />
         
-        {/* Subtle blur overlay only for the card container */}
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
           <div className="bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
             
-            <div className="pt-16 px-12 text-center">
+            {/* BRANDING: Capital C and Ultra-Bold Scale (Reduced Padding) */}
+            <div className="pt-8 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
-                <span className="font-pacifico text-8xl md:text-[9.5rem] text-slate-900 leading-[0.7] tracking-tighter">Cruisy</span>
-                <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-widest mt-4">travel</span>
+                <span className="font-pacifico text-7xl md:text-8xl text-slate-900 leading-[0.7] tracking-tighter">Cruisy</span>
+                <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-widest mt-2">travel</span>
               </h1>
-              <p className="font-russo text-[11px] text-slate-600 tracking-[0.5em] uppercase mt-12 font-bold">Advisor Portal</p>
+              <p className="font-russo text-[10px] text-slate-600 tracking-[0.5em] uppercase mt-4 font-bold">Advisor Portal</p>
             </div>
 
-            <div className="p-10 space-y-8">
+            <div className="p-8 space-y-6">
               <div className="flex bg-slate-900/10 p-1.5 rounded-2xl">
-                <button onClick={() => setAuthMode('login')} className={`flex-1 py-3 rounded-xl font-russo text-xs uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
-                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-3 rounded-xl font-russo text-xs uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
+                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
               </div>
 
               <form onSubmit={handleAuth} className="space-y-4">
                 {authMode === 'signup' && (
                   <>
-                    <input required className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
-                    <textarea className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Tell us about yourself..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                    <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+                    <textarea className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Tell us about yourself..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
-                <input required className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                <input type="password" required className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
+                <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+                <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
                 
-                <button type="submit" disabled={loading} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo text-xl shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-4">
+                <button type="submit" disabled={loading} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-2">
                   {loading ? <Loader2 className="animate-spin" /> : (authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK')}
-                  {!loading && <Ship size={24} />}
+                  {!loading && <Ship size={20} />}
                 </button>
               </form>
-              <p className="text-[10px] text-center text-slate-500 font-black uppercase tracking-widest">90 Miles to Cuba</p>
+              <p className="text-[9px] text-center text-slate-500 font-black uppercase tracking-widest">90 Miles to Cuba</p>
             </div>
           </div>
         </div>
@@ -373,63 +391,66 @@ export default function App() {
 
       {activeModal === 'preview' && (
         <Modal title="Digital Advisor Preview" onClose={() => setActiveModal(null)}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <div className="flex justify-center">
-              <div className="w-[300px] h-[620px] bg-slate-900 rounded-[3.5rem] p-3 shadow-2xl relative border-[8px] border-slate-800">
+              <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3.5rem] p-2.5 shadow-2xl relative border-[8px] border-slate-800">
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col">
                   {/* BUOY STRIPE */}
                   <div className="h-4 bg-[#34a4b8]" />
                   
-                  <div className="p-8 text-center bg-slate-50">
-                    <h5 className="font-russo text-2xl uppercase text-slate-800 leading-tight">@{profile.slug || 'advisor'}</h5>
+                  <div className="p-6 text-center bg-slate-50">
+                    <h5 className="font-russo text-xl uppercase text-slate-800 leading-tight">@{profile.slug || 'advisor'}</h5>
                     <p className="text-[10px] font-black text-[#34a4b8] uppercase mt-2 tracking-widest">{profile.fullName || 'Advisor'}</p>
-                    <div className="h-px bg-slate-200 w-12 mx-auto my-4" />
-                    <p className="text-[11px] text-slate-500 leading-relaxed italic">{profile.bio}</p>
+                    <div className="h-px bg-slate-200 w-12 mx-auto my-3" />
+                    <p className="text-[10px] text-slate-500 leading-relaxed italic line-clamp-3">{profile.bio}</p>
                   </div>
 
-                  <div className="px-5 py-2">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Curated {profile.destination} Experiences</p>
+                  <div className="px-4 py-1">
+                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Curated {profile.destination} Experiences</p>
                   </div>
 
-                  <div className="px-5 pb-5 space-y-3 overflow-y-auto scrollbar-hide flex-1">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[11px] italic text-slate-300">No experiences selected yet.</p>}
+                  <div className="px-4 pb-4 space-y-2.5 overflow-y-auto scrollbar-hide flex-1">
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300">No experiences selected yet.</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
                       return (
-                        <div key={id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden flex flex-col shadow-sm group transition-transform active:scale-[0.98]">
+                        <div key={id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col shadow-sm group transition-transform active:scale-[0.98]">
                           {it.img && (
-                            <div className="h-24 w-full overflow-hidden">
+                            <div className="h-20 w-full overflow-hidden">
                                <img src={it.img} className="w-full h-full object-cover" alt={it.name} />
                             </div>
                           )}
-                          <div className="p-3 flex justify-between items-center">
-                            <span className="text-[10px] font-bold truncate pr-2 text-slate-700 uppercase">{it.name}</span>
-                            <div className="bg-slate-50 p-1.5 rounded-lg">
-                               <ChevronRight size={12} className="text-[#34a4b8]" />
+                          <div className="p-2 flex justify-between items-center">
+                            <span className="text-[9px] font-bold truncate pr-2 text-slate-700 uppercase">{it.name}</span>
+                            <div className="bg-slate-50 p-1 rounded-lg">
+                               <ChevronRight size={10} className="text-[#34a4b8]" />
                             </div>
                           </div>
                         </div>
                       );
                     })}
-                    {selectedIds.length > 0 && <button className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo text-[11px] uppercase mt-4 shadow-lg shadow-[#34a4b8]/20">Book Full Itinerary</button>}
+                    {selectedIds.length > 0 && <button className="w-full bg-[#34a4b8] text-white py-3.5 rounded-2xl font-russo text-[10px] uppercase mt-3 shadow-lg shadow-[#34a4b8]/20">Book Full Itinerary</button>}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col justify-center space-y-6">
-               <div className="p-8 bg-slate-50 rounded-[2.5rem] space-y-6 border border-slate-100 shadow-sm text-center md:text-left">
-                 <h6 className="font-russo text-xs uppercase tracking-widest text-slate-400">Public Link</h6>
-                 <div className="p-5 bg-white border border-slate-100 rounded-3xl flex items-center gap-3 shadow-inner">
-                   <div className="flex-1 text-xs font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
-                   <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-3 text-[#34a4b8] bg-[#34a4b8]/10 rounded-xl transition-all hover:bg-[#34a4b8]/20">{copyStatus ? <CircleCheck size={20} /> : <Clipboard size={20} />}</button>
+
+            <div className="flex flex-col justify-center space-y-4">
+               <div className="p-6 bg-slate-50 rounded-[2rem] space-y-5 border border-slate-100 shadow-sm text-center lg:text-left">
+                 <h6 className="font-russo text-xs uppercase tracking-widest text-slate-400">Share Your Link</h6>
+                 <div className="p-4 bg-white border border-slate-100 rounded-2xl flex items-center gap-3 shadow-inner overflow-hidden">
+                   <div className="flex-1 text-[11px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
+                   <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2.5 text-[#34a4b8] bg-[#34a4b8]/10 rounded-xl transition-all hover:bg-[#34a4b8]/20 flex-shrink-0">
+                     {copyStatus ? <CircleCheck size={18} /> : <Clipboard size={18} />}
+                   </button>
                  </div>
-                 <div className="p-6 bg-[#34a4b8]/5 rounded-2xl space-y-3">
-                    <p className="font-russo text-[10px] text-[#34a4b8] uppercase flex items-center justify-center md:justify-start gap-2 font-bold leading-none"><Waves size={14} /> Tracking Engine Active</p>
-                    <p className="text-[11px] text-slate-400 leading-relaxed italic">The tag <strong>?asn-ref={profile.slug}</strong> is hardwired to every button.</p>
+                 <div className="p-5 bg-[#34a4b8]/5 rounded-xl space-y-2">
+                    <p className="font-russo text-[9px] text-[#34a4b8] uppercase flex items-center justify-center lg:justify-start gap-2 font-bold leading-none"><Waves size={12} /> Tracking Active</p>
+                    <p className="text-[10px] text-slate-400 leading-relaxed italic">The tag <strong>?asn-ref={profile.slug}</strong> is hardwired to every button.</p>
                  </div>
                </div>
-               <button onClick={() => alert("Advisor data synced to WordPress via Zapier.")} className="w-full bg-[#34a4b8] text-white py-8 rounded-[2.5rem] font-russo text-xl shadow-xl shadow-[#34a4b8]/30 hover:scale-[1.01] transition-transform uppercase tracking-widest">Sync Official Portal</button>
+               <button onClick={() => alert("Advisor data synced to WordPress via Zapier.")} className="w-full bg-[#34a4b8] text-white py-6 rounded-[2rem] font-russo text-lg shadow-xl shadow-[#34a4b8]/30 hover:scale-[1.01] transition-transform uppercase tracking-widest">Sync Official Portal</button>
             </div>
           </div>
         </Modal>
