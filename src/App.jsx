@@ -130,13 +130,14 @@ export default function App() {
 
   // --- ACTIONS ---
   const triggerSyncWebhook = async (advisorData) => {
+    // UPDATED WITH YOUR LIVE MAKE.COM URL
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
-    // VALIDATION: WordPress REQUIRES a Title (fullName)
+    // CRITICAL VALIDATION: Make.com/WordPress will fail if Title is empty.
     if (!advisorData.fullName || advisorData.fullName.trim() === "") {
       const msg = document.createElement('div');
       msg.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
-      msg.innerText = "Error: Please set your 'Display Name' in settings first.";
+      msg.innerText = "Error: Please enter a Display Name in Settings before syncing.";
       document.body.appendChild(msg);
       setTimeout(() => msg.remove(), 4000);
       setActiveModal('profile');
@@ -144,7 +145,7 @@ export default function App() {
     }
 
     const payload = {
-      fullName: advisorData.fullName,
+      fullName: advisorData.fullName.trim(),
       slug: advisorData.slug,
       bio: advisorData.bio,
       destination: advisorData.destination,
@@ -152,7 +153,7 @@ export default function App() {
       registration_date: new Date().toISOString()
     };
 
-    console.log("SENDING DATA TO MAKE.COM:", payload);
+    console.log("SYNCING DATA TO MAKE.COM:", payload);
 
     setLoading(true);
     try {
@@ -170,7 +171,7 @@ export default function App() {
         setTimeout(() => confirmBox.remove(), 3000);
       } else {
         const errorText = await response.text();
-        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
+        throw new Error(`Server Error (${response.status})`);
       }
       
       setLoading(false);
@@ -178,7 +179,7 @@ export default function App() {
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed: ${e.message}. Ensure Make.com is ON.`);
+      alert(`Sync failed: ${e.message}. Ensure your Make.com Scenario is ON.`);
       return false;
     }
   };
@@ -462,7 +463,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex flex-col justify-center space-y-4">
+            <div className="flex flex-col justify-center space-y-4 pb-8">
                <div className="p-6 bg-slate-50 rounded-[2rem] space-y-5 border border-slate-100 shadow-sm text-center lg:text-left">
                  <h6 className="font-russo text-xs uppercase tracking-widest text-slate-400">Share Your Link</h6>
                  <div className="p-4 bg-white border border-slate-100 rounded-2xl flex items-center gap-3 shadow-inner overflow-hidden">
