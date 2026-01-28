@@ -152,6 +152,8 @@ export default function App() {
       registration_date: new Date().toISOString()
     };
 
+    console.log("SENDING DATA TO MAKE.COM:", payload);
+
     setLoading(true);
     try {
       const response = await fetch(webhookUrl, {
@@ -167,7 +169,8 @@ export default function App() {
         document.body.appendChild(confirmBox);
         setTimeout(() => confirmBox.remove(), 3000);
       } else {
-        throw new Error(`Server responded with status ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
       }
       
       setLoading(false);
