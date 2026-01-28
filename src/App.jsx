@@ -10,6 +10,7 @@ import {
  * Theme: Island Lounge / Professional Coastal
  * Branding: Ultra-Bold "Cruisy" with Capital C
  * Persistence: Browser LocalStorage (Independent of WP Auth)
+ * Automation: Zapier Webhook -> https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/
  */
 
 const DESTINATIONS = [
@@ -17,6 +18,7 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
+const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
@@ -127,10 +129,11 @@ export default function App() {
   // --- ACTIONS ---
   const triggerSignupWebhook = async (advisorData) => {
     const zapierUrl = "https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/"; 
+    setLoading(true);
     try {
-      await fetch(zapierUrl, {
+      // We send as a standard POST. Zapier catch hooks handle JSON bodies well.
+      const response = await fetch(zapierUrl, {
         method: 'POST',
-        mode: 'no-cors',
         body: JSON.stringify({
           fullName: advisorData.fullName,
           slug: advisorData.slug,
@@ -140,9 +143,18 @@ export default function App() {
           registration_date: new Date().toISOString()
         }),
       });
+      
+      // If we are in the Preview Modal, show success message
+      if (activeModal === 'preview') {
+        alert("Success! Your official advisor page is being synced with WordPress.");
+      }
+      
+      setLoading(false);
       return true;
     } catch (e) {
       console.error("Zapier Error", e);
+      setLoading(false);
+      alert("Sync failed. Check your internet connection or Zapier status.");
       return false;
     }
   };
@@ -151,9 +163,7 @@ export default function App() {
     e.preventDefault();
     if (authMode === 'signup') {
       if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
-      setLoading(true);
       await triggerSignupWebhook(profile);
-      setLoading(false);
       setIsLoggedIn(true);
     } else {
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
@@ -442,7 +452,13 @@ export default function App() {
                     <p className="text-[10px] text-slate-400 leading-relaxed italic">The tag <strong>?asn-ref={profile.slug}</strong> is hardwired to every button.</p>
                  </div>
                </div>
-               <button onClick={() => alert("Advisor data synced to WordPress via Zapier.")} className="w-full bg-[#34a4b8] text-white py-6 rounded-[2rem] font-russo text-lg shadow-xl shadow-[#34a4b8]/30 hover:scale-[1.01] transition-transform uppercase tracking-widest">Sync Official Portal</button>
+               <button 
+                 onClick={() => triggerSignupWebhook(profile)} 
+                 disabled={loading}
+                 className="w-full bg-[#34a4b8] text-white py-6 rounded-[2rem] font-russo text-lg shadow-xl shadow-[#34a4b8]/30 hover:scale-[1.01] transition-transform uppercase tracking-widest flex items-center justify-center gap-3"
+                >
+                  {loading ? <Loader2 className="animate-spin" /> : "Sync Official Portal"}
+               </button>
             </div>
           </div>
         </Modal>
