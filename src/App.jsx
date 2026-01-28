@@ -8,6 +8,7 @@ import {
 /**
  * ADVISOR PORTAL - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
+ * Branding: Ultra-Bold "Cruisy" with Capital C
  * Persistence: Browser LocalStorage (Independent of WP Auth)
  * Automation: Make.com Webhook -> https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3
  */
@@ -129,30 +130,44 @@ export default function App() {
 
   // --- ACTIONS ---
   const triggerSyncWebhook = async (advisorData) => {
-    // UPDATED WITH YOUR LIVE MAKE.COM URL
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
+    // VALIDATION: WordPress REQUIRES a Title (fullName)
+    if (!advisorData.fullName || advisorData.fullName.trim() === "") {
+      const msg = document.createElement('div');
+      msg.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
+      msg.innerText = "Error: Please set your 'Display Name' in settings first.";
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 4000);
+      setActiveModal('profile');
+      return;
+    }
+
+    const payload = {
+      fullName: advisorData.fullName,
+      slug: advisorData.slug,
+      bio: advisorData.bio,
+      destination: advisorData.destination,
+      selected_experiences: selectedIds.join(','),
+      registration_date: new Date().toISOString()
+    };
+
     setLoading(true);
     try {
-      await fetch(webhookUrl, {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: advisorData.fullName,
-          slug: advisorData.slug,
-          bio: advisorData.bio,
-          destination: advisorData.destination,
-          selected_experiences: selectedIds.join(','),
-          registration_date: new Date().toISOString()
-        }),
+        body: JSON.stringify(payload),
       });
       
-      if (activeModal === 'preview') {
+      if (response.ok) {
         const confirmBox = document.createElement('div');
         confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
-        confirmBox.innerText = "Profile Successfully Synced to WordPress!";
+        confirmBox.innerText = "Cruisy Portal Synced Successfully!";
         document.body.appendChild(confirmBox);
         setTimeout(() => confirmBox.remove(), 3000);
+      } else {
+        throw new Error(`Server responded with status ${response.status}`);
       }
       
       setLoading(false);
@@ -160,6 +175,7 @@ export default function App() {
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
+      alert(`Sync failed: ${e.message}. Ensure Make.com is ON.`);
       return false;
     }
   };
@@ -212,7 +228,7 @@ export default function App() {
               <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase mt-4 font-bold">Advisor Portal</p>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="p-6 space-y-5">
               <div className="flex bg-slate-900/10 p-1 rounded-2xl">
                 <button onClick={() => setAuthMode('login')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
                 <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
@@ -244,7 +260,7 @@ export default function App() {
   // --- DASHBOARD VIEW ---
   return (
     <div className="min-h-screen bg-[#f1f5f9] font-sans text-slate-800">
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-8 py-5 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="font-pacifico text-4xl md:text-5xl text-slate-800 leading-none">Cruisy</span>
           <span className="font-russo text-3xl text-[#34a4b8] uppercase leading-none tracking-tighter">travel</span>
@@ -258,8 +274,8 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
-        <section className="bg-white rounded-[4rem] p-10 md:p-16 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
+        <section className="bg-white rounded-[3.5rem] p-10 md:p-14 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none"><Ship size={400} /></div>
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span className="text-[#34a4b8]">Control</span></h2>
@@ -287,31 +303,31 @@ export default function App() {
         </section>
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white/60 backdrop-blur p-10 rounded-[3rem] border border-white flex items-center gap-6 shadow-sm">
-                <div className="w-16 h-16 rounded-3xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
-                    <MapPin size={32} />
+            <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
+                    <MapPin size={28} />
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Base Port</p>
-                    <p className="font-russo text-xl text-slate-800 uppercase">{profile.destination || 'N/A'}</p>
+                    <p className="font-russo text-lg text-slate-800 uppercase">{profile.destination || 'N/A'}</p>
                 </div>
             </div>
-            <div className="bg-white/60 backdrop-blur p-10 rounded-[3rem] border border-white flex items-center gap-6 shadow-sm">
-                <div className="w-16 h-16 rounded-3xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
-                    <CircleCheck size={32} />
+            <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
+                    <CircleCheck size={28} />
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Experiences</p>
-                    <p className="font-russo text-xl text-slate-800 uppercase">{selectedIds.length} Selections</p>
+                    <p className="font-russo text-lg text-slate-800 uppercase">{selectedIds.length} Selections</p>
                 </div>
             </div>
-            <div className="bg-white/60 backdrop-blur p-10 rounded-[3rem] border border-white flex items-center gap-6 shadow-sm">
-                <div className="w-16 h-16 rounded-3xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
-                    <Anchor size={32} />
+            <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
+                    <Anchor size={28} />
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tracking Status</p>
-                    <p className="font-russo text-xl text-slate-800 uppercase">ACTIVE</p>
+                    <p className="font-russo text-lg text-slate-800 uppercase">ACTIVE</p>
                 </div>
             </div>
         </section>
