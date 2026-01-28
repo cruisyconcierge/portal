@@ -17,7 +17,6 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
-const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
 export default function App() {
@@ -66,38 +65,44 @@ export default function App() {
   const fetchItineraries = async () => {
     setLoading(true);
     setError(null);
-    try {
-      // Step 1: Attempt to fetch from WP REST API
-      const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${ITINERARY_CPT}?per_page=100&_embed`);
-      
-      // Handle API errors (like the 404 seen in inspector)
-      if (!response.ok) {
-        throw new Error(`WordPress API Error (${response.status}). Check 'itinerary' CPT REST visibility.`);
-      }
+    
+    // List of potential endpoints to try (Wordpress can be inconsistent with CPT slugs)
+    const endpoints = ['itinerary', 'itineraries'];
+    let success = false;
 
-      const data = await response.json();
-      console.log("Cruisy API Sync Success:", data); 
-
-      if (Array.isArray(data)) {
-        const mapped = data.map(item => ({
-          id: item.id,
-          name: item.title?.rendered || 'Untitled Activity',
-          description: item.content?.rendered || '', 
-          category: item.acf?.category || 'Experiences',
-          destinationTag: item.acf?.destination_tag || '',
-          price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
-          duration: item.acf?.duration || 'Flexible',
-          bookingUrl: item.acf?.booking_url || item.link,
-          img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
-        }));
-        setItineraries(mapped);
+    for (const slug of endpoints) {
+      if (success) break;
+      try {
+        const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${slug}?per_page=100&_embed`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            const mapped = data.map(item => ({
+              id: item.id,
+              name: item.title?.rendered || 'Untitled Activity',
+              description: item.content?.rendered || '', 
+              category: item.acf?.category || 'Experiences',
+              destinationTag: item.acf?.destination_tag || '',
+              price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
+              duration: item.acf?.duration || 'Flexible',
+              bookingUrl: item.acf?.booking_url || item.link,
+              img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
+            }));
+            setItineraries(mapped);
+            success = true;
+            console.log(`Success syncing via /${slug}`);
+          }
+        }
+      } catch (err) {
+        console.warn(`Failed fetch on /${slug}:`, err);
       }
-    } catch (err) {
-      console.error("Fetch Error:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
+
+    if (!success) {
+      setError("WordPress API Error (404). Check 'itinerary' CPT REST visibility.");
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -112,7 +117,7 @@ export default function App() {
     try {
       await fetch(zapierUrl, {
         method: 'POST',
-        mode: 'no-cors', // Standard for Zapier hooks
+        mode: 'no-cors',
         body: JSON.stringify({
           fullName: advisorData.fullName,
           slug: advisorData.slug,
@@ -219,7 +224,6 @@ export default function App() {
     <div className="min-h-screen bg-[#f1f5f9] font-sans text-slate-800">
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Scaled Cruisy in Nav */}
           <span className="font-pacifico text-4xl md:text-5xl text-slate-800 leading-none">Cruisy</span>
           <span className="font-russo text-3xl text-[#34a4b8] uppercase leading-none tracking-tighter">travel</span>
         </div>
