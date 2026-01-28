@@ -9,7 +9,7 @@ import {
  * ADVISOR PORTAL - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
  * Branding: Ultra-Bold "Cruisy" with Capital C
- * Automation: Zapier Webhook -> https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/
+ * Persistence: Browser LocalStorage (Independent of WP Auth)
  */
 
 const DESTINATIONS = [
@@ -17,7 +17,6 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
-const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
@@ -78,7 +77,6 @@ export default function App() {
   const [copyStatus, setCopyStatus] = useState(false);
 
   // --- PERSISTENCE ---
-  // Save current profile and selections to a user-specific key so it persists after logout
   useEffect(() => {
     if (isLoggedIn && profile.slug) {
       localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
@@ -158,14 +156,13 @@ export default function App() {
       setLoading(false);
       setIsLoggedIn(true);
     } else {
-      // Login mode: Check if user data exists to restore it
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
           setProfile(parsed.profile);
           setSelectedIds(parsed.selectedIds || []);
-        } catch (e) { /* fallback to current inputs */ }
+        } catch (e) { /* fallback */ }
       }
       setIsLoggedIn(true);
     }
@@ -178,39 +175,35 @@ export default function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('cruisy_current_session_slug');
-    // We do NOT clear selectedIds state here so they remain if the user logs back in during same runtime,
-    // but clear them if you want a totally fresh state for next login attempt
   };
 
   // --- LOGIN / SIGNUP VIEW ---
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen font-sans flex items-center justify-center relative p-6 bg-slate-900">
-        {/* VIBRANT BACKGROUND - NO COLOR OVERLAY */}
         <div 
-          className="fixed inset-0 z-0 bg-cover bg-center" 
+          className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000" 
           style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} 
         />
         
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
-          <div className="bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
+          <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
             
-            {/* BRANDING: Capital C and Ultra-Bold Scale (Reduced Padding) */}
-            <div className="pt-8 px-12 text-center">
+            <div className="pt-10 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
                 <span className="font-pacifico text-7xl md:text-8xl text-slate-900 leading-[0.7] tracking-tighter">Cruisy</span>
-                <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-widest mt-2">travel</span>
+                <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-widest mt-3">travel</span>
               </h1>
-              <p className="font-russo text-[10px] text-slate-600 tracking-[0.5em] uppercase mt-4 font-bold">Advisor Portal</p>
+              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase mt-4 font-bold">Advisor Portal</p>
             </div>
 
             <div className="p-8 space-y-6">
-              <div className="flex bg-slate-900/10 p-1.5 rounded-2xl">
-                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
-                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
+              <div className="flex bg-slate-900/10 p-1 rounded-2xl">
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
+                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
               </div>
 
-              <form onSubmit={handleAuth} className="space-y-4">
+              <form onSubmit={handleAuth} className="space-y-3">
                 {authMode === 'signup' && (
                   <>
                     <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
@@ -225,7 +218,7 @@ export default function App() {
                   {!loading && <Ship size={20} />}
                 </button>
               </form>
-              <p className="text-[9px] text-center text-slate-500 font-black uppercase tracking-widest">90 Miles to Cuba</p>
+              <p className="text-[9px] text-center text-slate-400 font-black uppercase tracking-widest">90 Miles to Cuba</p>
             </div>
           </div>
         </div>
@@ -278,7 +271,6 @@ export default function App() {
             </div>
         </section>
 
-        {/* STATUS BAR */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white/60 backdrop-blur p-10 rounded-[3rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-16 h-16 rounded-3xl bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]">
