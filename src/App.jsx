@@ -17,45 +17,61 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
+const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
+// MODAL COMPONENT (Moved outside App to fix typing focus bug)
+const Modal = ({ title, children, onClose }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white">
+      <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+        <h3 className="font-russo text-xl text-slate-800 uppercase tracking-tight">{title}</h3>
+        <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+          <X size={24} className="text-slate-400" />
+        </button>
+      </div>
+      <div className="p-8 overflow-y-auto scrollbar-hide">{children}</div>
+    </div>
+  </div>
+);
+
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Initialize state from LocalStorage immediately to prevent reset bug
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('cruisy_advisor_session') !== null;
+  });
+
   const [authMode, setAuthMode] = useState('login'); 
   const [activeModal, setActiveModal] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [itineraries, setItineraries] = useState([]);
   
-  const [profile, setProfile] = useState({
-    fullName: '',
-    slug: '', 
-    bio: 'Certified Travel Advisor with Cruisy Travel.',
-    destination: 'Key West',
-    password: ''
-  });
-  
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [copyStatus, setCopyStatus] = useState(false);
-
-  // Initial Sync from LocalStorage
-  useEffect(() => {
+  const [profile, setProfile] = useState(() => {
     const saved = localStorage.getItem('cruisy_advisor_session');
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        if (data && data.profile) {
-          setProfile(prev => ({ ...prev, ...data.profile }));
-          setSelectedIds(Array.isArray(data.selectedIds) ? data.selectedIds : []);
-          setIsLoggedIn(true);
-        }
-      } catch (e) { 
-        localStorage.removeItem('cruisy_advisor_session');
-      }
+        return data.profile || { fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' };
+      } catch (e) { return { fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' }; }
     }
-  }, []);
+    return { fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '' };
+  });
+  
+  const [selectedIds, setSelectedIds] = useState(() => {
+    const saved = localStorage.getItem('cruisy_advisor_session');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        return Array.isArray(data.selectedIds) ? data.selectedIds : [];
+      } catch (e) { return []; }
+    }
+    return [];
+  });
 
-  // Persistent state saving
+  const [copyStatus, setCopyStatus] = useState(false);
+
+  // Persistent state saving on any change
   useEffect(() => {
     if (isLoggedIn) {
       localStorage.setItem('cruisy_advisor_session', JSON.stringify({ profile, selectedIds }));
@@ -65,8 +81,6 @@ export default function App() {
   const fetchItineraries = async () => {
     setLoading(true);
     setError(null);
-    
-    // List of potential endpoints to try (Wordpress can be inconsistent with CPT slugs)
     const endpoints = ['itinerary', 'itineraries'];
     let success = false;
 
@@ -74,7 +88,6 @@ export default function App() {
       if (success) break;
       try {
         const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${slug}?per_page=100&_embed`);
-        
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data)) {
@@ -91,17 +104,12 @@ export default function App() {
             }));
             setItineraries(mapped);
             success = true;
-            console.log(`Success syncing via /${slug}`);
           }
         }
-      } catch (err) {
-        console.warn(`Failed fetch on /${slug}:`, err);
-      }
+      } catch (err) { console.warn(`Failed fetch on /${slug}:`, err); }
     }
 
-    if (!success) {
-      setError("WordPress API Error (404). Check 'itinerary' CPT REST visibility.");
-    }
+    if (!success) { setError("WordPress API Error (404). Check 'itinerary' CPT REST visibility."); }
     setLoading(false);
   };
 
@@ -109,9 +117,6 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  /**
-   * ZAPIER WEBHOOK INTEGRATION
-   */
   const triggerSignupWebhook = async (advisorData) => {
     const zapierUrl = "https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/"; 
     try {
@@ -157,20 +162,6 @@ export default function App() {
     setSelectedIds([]);
   };
 
-  const Modal = ({ title, children, onClose }) => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white">
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-          <h3 className="font-russo text-xl text-slate-800 uppercase tracking-tight">{title}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-            <X size={24} className="text-slate-400" />
-          </button>
-        </div>
-        <div className="p-8 overflow-y-auto scrollbar-hide">{children}</div>
-      </div>
-    </div>
-  );
-
   // --- LOGIN / SIGNUP VIEW ---
   if (!isLoggedIn) {
     return (
@@ -181,7 +172,6 @@ export default function App() {
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
           <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white">
             
-            {/* BRANDING: Capital C and Ultra-Bold Scale */}
             <div className="pt-16 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
                 <span className="font-pacifico text-8xl md:text-[9.5rem] text-slate-800 leading-[0.7] tracking-tighter">Cruisy</span>
@@ -199,15 +189,15 @@ export default function App() {
               <form onSubmit={handleAuth} className="space-y-4">
                 {authMode === 'signup' && (
                   <>
-                    <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Full Display Name" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
-                    <textarea className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Short Bio (Visible on Page)" rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                    <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+                    <textarea className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Brief professional bio..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
-                <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Username / URL Slug" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                <input type="password" required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 placeholder:text-slate-300" placeholder="Set Access Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
+                <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Username / ID" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+                <input type="password" required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 placeholder:text-slate-300" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
                 
                 <button type="submit" disabled={loading} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo text-xl shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-4">
-                  {loading ? <Loader2 className="animate-spin" /> : (authMode === 'login' ? 'ENTER LOUNGE' : 'CREATE PORTAL')}
+                  {loading ? <Loader2 className="animate-spin" /> : (authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK')}
                   {!loading && <Ship size={24} />}
                 </button>
               </form>
@@ -302,19 +292,28 @@ export default function App() {
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Display Name</label>
-              <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+              <input 
+                className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8] transition-colors" 
+                value={profile.fullName} 
+                onChange={e => setProfile(prev => ({...prev, fullName: e.target.value}))} 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Specialization Port</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {DESTINATIONS.map(d => (
-                  <button key={d} onClick={() => setProfile({...profile, destination: d})} className={`p-3 rounded-xl border text-[10px] font-black uppercase transition-all ${profile.destination === d ? 'bg-[#34a4b8] border-[#34a4b8] text-white shadow-md' : 'bg-white text-slate-400 hover:border-slate-300'}`}>{d}</button>
+                  <button key={d} onClick={() => setProfile(prev => ({...prev, destination: d}))} className={`p-3 rounded-xl border text-[10px] font-black uppercase transition-all ${profile.destination === d ? 'bg-[#34a4b8] border-[#34a4b8] text-white shadow-md' : 'bg-white text-slate-400 hover:border-slate-300'}`}>{d}</button>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Professional Bio</label>
-              <textarea rows="4" className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+              <textarea 
+                rows="4" 
+                className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium focus:border-[#34a4b8] transition-colors" 
+                value={profile.bio} 
+                onChange={e => setProfile(prev => ({...prev, bio: e.target.value}))} 
+              />
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg shadow-[#34a4b8]/20">Update Advisor Profile</button>
           </div>
@@ -332,23 +331,15 @@ export default function App() {
                   <div className="p-6 bg-red-50 border border-red-100 rounded-[2.5rem] text-center space-y-4 shadow-sm">
                     <CircleAlert className="mx-auto text-red-500" size={40} />
                     <p className="text-sm text-red-600 font-bold leading-relaxed">{error}</p>
-                    <div className="pt-4 border-t border-red-100">
-                       <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Admin Instructions:</p>
-                       <p className="text-[10px] text-slate-600 mt-2">1. Go to <strong>WP Dashboard {'->'} CPT UI {'->'} Edit Post Type</strong>.</p>
-                       <p className="text-[10px] text-slate-600">2. Ensure <strong>Show in REST API</strong> is set to <strong>True</strong>.</p>
-                       <p className="text-[10px] text-slate-600">3. Ensure <strong>REST API base slug</strong> is set to <strong>itinerary</strong>.</p>
-                    </div>
                   </div>
                 )}
                 
                 {itineraries
                   .filter(exp => {
                     const port = profile.destination.toLowerCase();
-                    // DEEP SCAN: Checks Tag, Body Description, and Title for port matches
                     const tagMatch = String(exp.destinationTag).toLowerCase().includes(port);
                     const descMatch = String(exp.description).toLowerCase().includes(port);
                     const nameMatch = String(exp.name).toLowerCase().includes(port);
-                    
                     return tagMatch || descMatch || nameMatch;
                   })
                   .map((itinerary) => (
@@ -368,17 +359,6 @@ export default function App() {
                       </div>
                   </div>
                 ))}
-                
-                {!loading && !error && itineraries.length > 0 && itineraries.filter(exp => {
-                    const port = profile.destination.toLowerCase();
-                    return String(exp.destinationTag).toLowerCase().includes(port) || String(exp.description).toLowerCase().includes(port) || String(exp.name).toLowerCase().includes(port);
-                }).length === 0 && (
-                  <div className="py-20 text-center text-slate-400 italic">
-                    <Ship className="mx-auto mb-4 opacity-10" size={48} />
-                    <p>No matches found for "{profile.destination}".</p>
-                    <p className="text-[10px] mt-2 font-bold uppercase tracking-widest">System Ready: Update destination in Profile.</p>
-                  </div>
-                )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-6 shadow-lg shadow-[#34a4b8]/20">Confirm Selections</button>
           </div>
@@ -393,8 +373,8 @@ export default function App() {
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col">
                   <div className="h-4 bg-[#34a4b8]" />
                   <div className="p-8 text-center bg-slate-50">
-                    <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-6xl text-slate-800 shadow-md">{profile.fullName?.charAt(0) || 'C'}</div>
-                    <h5 className="font-russo text-xl uppercase text-slate-800 leading-none">{profile.fullName || 'Advisor'}</h5>
+                    <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-6xl text-slate-800 shadow-md">{profile.fullName?.charAt(0) || profile.slug?.charAt(0) || 'C'}</div>
+                    <h5 className="font-russo text-xl uppercase text-slate-800 leading-none">{profile.fullName || profile.slug || 'Advisor'}</h5>
                     <p className="text-[10px] font-black text-[#34a4b8] uppercase mt-3 tracking-widest">{profile.destination} Specialist</p>
                   </div>
                   <div className="p-5 space-y-3 overflow-y-auto scrollbar-hide flex-1">
