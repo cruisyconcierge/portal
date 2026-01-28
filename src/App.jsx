@@ -18,7 +18,6 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
-const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
@@ -139,30 +138,31 @@ export default function App() {
       return false;
     }
 
-    // Prepare full object data for easier WordPress rendering
+    // Prepare full object data for the JSON gallery/display on WP
     const experienceData = selectedIds.map(id => {
       const item = itineraries.find(it => it.id === id);
       return {
         id: id,
-        title: item?.name,
-        image: item?.img,
-        link: item?.bookingUrl,
-        price: item?.price
+        title: item?.name || 'Experience',
+        image: item?.img || '',
+        link: item?.bookingUrl || '',
+        price: item?.price || ''
       };
     });
 
     const payload = {
       fullName: advisorData.fullName.trim(),
-      slug: advisorData.slug,
+      slug: advisorData.slug.trim().toLowerCase(),
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_ids: selectedIds.join(','), 
-      selected_experiences: selectedIds, 
+      // We send both string and array for maximum mapping flexibility in Make.com
+      selected_ids_string: selectedIds.join(','), 
+      selected_ids_array: selectedIds, 
       experiences_json: JSON.stringify(experienceData),
-      registration_date: new Date().toISOString()
+      timestamp: new Date().toISOString()
     };
 
-    console.log("CRUISY SYNC START:", payload);
+    console.log("CRUISY SYNC ATTEMPT:", payload);
 
     setLoading(true);
     try {
@@ -173,9 +173,10 @@ export default function App() {
       });
       
       if (response.ok) {
+        // Visual confirmation toast
         const confirmBox = document.createElement('div');
         confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
-        confirmBox.innerText = "Official Portal Updated Successfully!";
+        confirmBox.innerText = "Cruisy Portal Updated Successfully!";
         document.body.appendChild(confirmBox);
         setTimeout(() => confirmBox.remove(), 3000);
       } else {
@@ -188,7 +189,7 @@ export default function App() {
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed: ${e.message}. Ensure your Make.com Scenario is active.`);
+      alert(`Sync failed: ${e.message}. Ensure your Make.com Scenario is active and toggled ON.`);
       return false;
     }
   };
@@ -197,8 +198,12 @@ export default function App() {
     e.preventDefault();
     if (authMode === 'signup') {
       if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
-      await triggerSyncWebhook(profile);
-      setIsLoggedIn(true);
+      // First save locally
+      localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
+      localStorage.setItem('cruisy_current_session_slug', profile.slug);
+      // Then sync to WP
+      const success = await triggerSyncWebhook(profile);
+      if (success) setIsLoggedIn(true);
     } else {
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
       if (savedData) {
@@ -358,7 +363,7 @@ export default function App() {
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Display Name</label>
               <input 
-                className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8] transition-colors" 
+                className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8] transition-colors shadow-sm" 
                 value={profile.fullName} 
                 onChange={e => setProfile(prev => ({...prev, fullName: e.target.value}))} 
               />
@@ -375,14 +380,13 @@ export default function App() {
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Professional Bio</label>
               <textarea 
                 rows="4" 
-                className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium focus:border-[#34a4b8] transition-colors" 
+                className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium focus:border-[#34a4b8] transition-colors shadow-sm" 
                 value={profile.bio} 
                 onChange={e => setProfile(prev => ({...prev, bio: e.target.value}))} 
               />
             </div>
             <button onClick={handleUpdateProfile} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg shadow-[#34a4b8]/20 flex items-center justify-center gap-3">
-              {loading && <Loader2 className="animate-spin" size={20} />}
-              Update Advisor Profile
+              {loading ? <Loader2 className="animate-spin" size={20} /> : "Update Advisor Profile"}
             </button>
           </div>
         </Modal>
@@ -431,7 +435,7 @@ export default function App() {
         <Modal title="Digital Advisor Preview" onClose={() => setActiveModal(null)}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
             <div className="flex justify-center">
-              <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3.5rem] p-2.5 shadow-2xl relative border-[8px] border-slate-800">
+              <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3.5rem] p-2.5 shadow-2xl relative border-[8px] border-slate-800 shadow-black/60">
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col">
                   {/* BUOY STRIPE */}
                   <div className="h-4 bg-[#34a4b8]" />
