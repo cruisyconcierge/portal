@@ -20,9 +20,9 @@ const WP_BASE_URL = 'https://cruisytravel.com';
 const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
-// MODAL COMPONENT (Moved outside App to fix typing focus bug)
+// MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
 const Modal = ({ title, children, onClose }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
     <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white">
       <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
         <h3 className="font-russo text-xl text-slate-800 uppercase tracking-tight">{title}</h3>
@@ -36,7 +36,7 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 export default function App() {
-  // Initialize state from LocalStorage immediately to prevent reset bug
+  // --- STATE ---
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('cruisy_advisor_session') !== null;
   });
@@ -71,13 +71,14 @@ export default function App() {
 
   const [copyStatus, setCopyStatus] = useState(false);
 
-  // Persistent state saving on any change
+  // --- PERSISTENCE ---
   useEffect(() => {
     if (isLoggedIn) {
       localStorage.setItem('cruisy_advisor_session', JSON.stringify({ profile, selectedIds }));
     }
   }, [profile, selectedIds, isLoggedIn]);
 
+  // --- API LOGIC ---
   const fetchItineraries = async () => {
     setLoading(true);
     setError(null);
@@ -117,6 +118,7 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
+  // --- ACTIONS ---
   const triggerSignupWebhook = async (advisorData) => {
     const zapierUrl = "https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/"; 
     try {
@@ -165,43 +167,47 @@ export default function App() {
   // --- LOGIN / SIGNUP VIEW ---
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen font-sans flex items-center justify-center relative p-6 bg-slate-50">
-        <div className="fixed inset-0 z-0 bg-cover bg-center opacity-40 grayscale" style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} />
-        <div className="fixed inset-0 z-0 bg-white/60 backdrop-blur-[2px]" />
-
+      <div className="min-h-screen font-sans flex items-center justify-center relative p-6 bg-slate-900">
+        {/* VIBRANT BACKGROUND - NO COLOR OVERLAY */}
+        <div 
+          className="fixed inset-0 z-0 bg-cover bg-center" 
+          style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} 
+        />
+        
+        {/* Subtle blur overlay only for the card container */}
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
-          <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white">
+          <div className="bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
             
             <div className="pt-16 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
-                <span className="font-pacifico text-8xl md:text-[9.5rem] text-slate-800 leading-[0.7] tracking-tighter">Cruisy</span>
+                <span className="font-pacifico text-8xl md:text-[9.5rem] text-slate-900 leading-[0.7] tracking-tighter">Cruisy</span>
                 <span className="font-russo text-4xl md:text-5xl text-[#34a4b8] uppercase leading-none tracking-widest mt-4">travel</span>
               </h1>
-              <p className="font-russo text-[11px] text-slate-400 tracking-[0.5em] uppercase mt-12 font-bold">Official Advisor Portal</p>
+              <p className="font-russo text-[11px] text-slate-600 tracking-[0.5em] uppercase mt-12 font-bold">Advisor Portal</p>
             </div>
 
             <div className="p-10 space-y-8">
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl">
-                <button onClick={() => setAuthMode('login')} className={`flex-1 py-3 rounded-xl font-russo text-xs uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-400'}`}>Login</button>
-                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-3 rounded-xl font-russo text-xs uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-400'}`}>Sign Up</button>
+              <div className="flex bg-slate-900/10 p-1.5 rounded-2xl">
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-3 rounded-xl font-russo text-xs uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
+                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-3 rounded-xl font-russo text-xs uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
               </div>
 
               <form onSubmit={handleAuth} className="space-y-4">
                 {authMode === 'signup' && (
                   <>
-                    <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
-                    <textarea className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Brief professional bio..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                    <input required className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+                    <textarea className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Tell us about yourself..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
-                <input required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Username / ID" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                <input type="password" required className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#34a4b8] outline-none text-slate-800 placeholder:text-slate-300" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
+                <input required className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+                <input type="password" required className="w-full p-5 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
                 
                 <button type="submit" disabled={loading} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo text-xl shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-4">
                   {loading ? <Loader2 className="animate-spin" /> : (authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK')}
                   {!loading && <Ship size={24} />}
                 </button>
               </form>
-              <p className="text-[10px] text-center text-slate-300 font-black uppercase tracking-widest">90 Miles to Cuba</p>
+              <p className="text-[10px] text-center text-slate-500 font-black uppercase tracking-widest">90 Miles to Cuba</p>
             </div>
           </div>
         </div>
@@ -219,7 +225,7 @@ export default function App() {
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Cruisy Ambassador</span>
+            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Advisor</span>
             <span className="font-pacifico text-[#34a4b8] text-2xl leading-none mt-1 uppercase">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200"><LogOut size={20} /></button>
@@ -232,7 +238,7 @@ export default function App() {
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span className="text-[#34a4b8]">Control</span></h2>
                 <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
-                  Curate experiences and manage your official advisor landing page. <span className="text-[#34a4b8] font-bold underline">cruisytravel.com/{profile.slug || 'matt'}</span>
+                  Curate experiences and manage your official advisor landing page. <span className="text-[#34a4b8] font-bold underline">cruisytravel.com/{profile.slug || 'username'}</span>
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
@@ -369,22 +375,44 @@ export default function App() {
         <Modal title="Digital Advisor Preview" onClose={() => setActiveModal(null)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="flex justify-center">
-              <div className="w-[300px] h-[600px] bg-slate-900 rounded-[3.5rem] p-3 shadow-2xl relative border-[8px] border-slate-800">
+              <div className="w-[300px] h-[620px] bg-slate-900 rounded-[3.5rem] p-3 shadow-2xl relative border-[8px] border-slate-800">
                 <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col">
+                  {/* BUOY STRIPE */}
                   <div className="h-4 bg-[#34a4b8]" />
+                  
                   <div className="p-8 text-center bg-slate-50">
-                    <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 border-2 border-[#34a4b8] flex items-center justify-center font-pacifico text-6xl text-slate-800 shadow-md">{profile.fullName?.charAt(0) || profile.slug?.charAt(0) || 'C'}</div>
-                    <h5 className="font-russo text-xl uppercase text-slate-800 leading-none">{profile.fullName || profile.slug || 'Advisor'}</h5>
-                    <p className="text-[10px] font-black text-[#34a4b8] uppercase mt-3 tracking-widest">{profile.destination} Specialist</p>
+                    <h5 className="font-russo text-2xl uppercase text-slate-800 leading-tight">@{profile.slug || 'advisor'}</h5>
+                    <p className="text-[10px] font-black text-[#34a4b8] uppercase mt-2 tracking-widest">{profile.fullName || 'Advisor'}</p>
+                    <div className="h-px bg-slate-200 w-12 mx-auto my-4" />
+                    <p className="text-[11px] text-slate-500 leading-relaxed italic">{profile.bio}</p>
                   </div>
-                  <div className="p-5 space-y-3 overflow-y-auto scrollbar-hide flex-1">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[11px] italic text-slate-300">Itinerary is empty.</p>}
+
+                  <div className="px-5 py-2">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Curated {profile.destination} Experiences</p>
+                  </div>
+
+                  <div className="px-5 pb-5 space-y-3 overflow-y-auto scrollbar-hide flex-1">
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[11px] italic text-slate-300">No experiences selected yet.</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
-                      return <div key={id} className="p-4 bg-white border border-slate-100 rounded-3xl flex justify-between items-center shadow-sm"><span className="text-[11px] font-bold truncate w-32 uppercase tracking-tight text-slate-700">{it.name}</span><ChevronRight size={14} className="text-slate-300" /></div>
+                      return (
+                        <div key={id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden flex flex-col shadow-sm group transition-transform active:scale-[0.98]">
+                          {it.img && (
+                            <div className="h-24 w-full overflow-hidden">
+                               <img src={it.img} className="w-full h-full object-cover" alt={it.name} />
+                            </div>
+                          )}
+                          <div className="p-3 flex justify-between items-center">
+                            <span className="text-[10px] font-bold truncate pr-2 text-slate-700 uppercase">{it.name}</span>
+                            <div className="bg-slate-50 p-1.5 rounded-lg">
+                               <ChevronRight size={12} className="text-[#34a4b8]" />
+                            </div>
+                          </div>
+                        </div>
+                      );
                     })}
-                    {selectedIds.length > 0 && <button className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo text-[11px] uppercase mt-4 shadow-lg shadow-[#34a4b8]/20">Book Itinerary</button>}
+                    {selectedIds.length > 0 && <button className="w-full bg-[#34a4b8] text-white py-4 rounded-2xl font-russo text-[11px] uppercase mt-4 shadow-lg shadow-[#34a4b8]/20">Book Full Itinerary</button>}
                   </div>
                 </div>
               </div>
