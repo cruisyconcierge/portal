@@ -10,7 +10,7 @@ import {
  * Theme: Island Lounge / Professional Coastal
  * Branding: Ultra-Bold "Cruisy" with Capital C
  * Persistence: Browser LocalStorage (Independent of WP Auth)
- * Automation: Zapier Webhook -> https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/
+ * Automation: Make.com Webhook -> https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3
  */
 
 const DESTINATIONS = [
@@ -18,7 +18,6 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
-const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
@@ -79,6 +78,7 @@ export default function App() {
   const [copyStatus, setCopyStatus] = useState(false);
 
   // --- PERSISTENCE ---
+  // This effect ensures that every time a user types or selects an experience, it is saved instantly
   useEffect(() => {
     if (isLoggedIn && profile.slug) {
       localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
@@ -127,13 +127,15 @@ export default function App() {
   }, [isLoggedIn]);
 
   // --- ACTIONS ---
-  const triggerSignupWebhook = async (advisorData) => {
-    const zapierUrl = "https://hooks.zapier.com/hooks/catch/26219294/uqv2h8v/"; 
+  const triggerSyncWebhook = async (advisorData) => {
+    // UPDATED WITH YOUR LIVE MAKE.COM URL
+    const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
+    
     setLoading(true);
     try {
-      // We send as a standard POST. Zapier catch hooks handle JSON bodies well.
-      const response = await fetch(zapierUrl, {
+      await fetch(webhookUrl, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName: advisorData.fullName,
           slug: advisorData.slug,
@@ -146,15 +148,19 @@ export default function App() {
       
       // If we are in the Preview Modal, show success message
       if (activeModal === 'preview') {
-        alert("Success! Your official advisor page is being synced with WordPress.");
+        // Simple message box logic
+        const confirmBox = document.createElement('div');
+        confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
+        confirmBox.innerText = "Profile Successfully Synced to WordPress!";
+        document.body.appendChild(confirmBox);
+        setTimeout(() => confirmBox.remove(), 3000);
       }
       
       setLoading(false);
       return true;
     } catch (e) {
-      console.error("Zapier Error", e);
+      console.error("Webhook Error", e);
       setLoading(false);
-      alert("Sync failed. Check your internet connection or Zapier status.");
       return false;
     }
   };
@@ -163,7 +169,7 @@ export default function App() {
     e.preventDefault();
     if (authMode === 'signup') {
       if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
-      await triggerSignupWebhook(profile);
+      await triggerSyncWebhook(profile);
       setIsLoggedIn(true);
     } else {
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
@@ -191,6 +197,7 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen font-sans flex items-center justify-center relative p-6 bg-slate-900">
+        {/* VIBRANT BACKGROUND - NO COLOR OVERLAY */}
         <div 
           className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000" 
           style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} 
@@ -209,8 +216,8 @@ export default function App() {
 
             <div className="p-8 space-y-6">
               <div className="flex bg-slate-900/10 p-1 rounded-2xl">
-                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
-                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
+                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
               </div>
 
               <form onSubmit={handleAuth} className="space-y-3">
@@ -453,7 +460,7 @@ export default function App() {
                  </div>
                </div>
                <button 
-                 onClick={() => triggerSignupWebhook(profile)} 
+                 onClick={() => triggerSyncWebhook(profile)} 
                  disabled={loading}
                  className="w-full bg-[#34a4b8] text-white py-6 rounded-[2rem] font-russo text-lg shadow-xl shadow-[#34a4b8]/30 hover:scale-[1.01] transition-transform uppercase tracking-widest flex items-center justify-center gap-3"
                 >
