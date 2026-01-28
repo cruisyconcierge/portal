@@ -14,7 +14,7 @@ import {
  */
 
 const DESTINATIONS = [
-  'Key West', 'Miami', 'St Thomas', 'Cozumel', 'Nassau', 'Orlando', 'Honolulu'
+  'Key West', 'Miami', 'St Thomas', 'C/* */ozumel', 'Nassau', 'Orlando', 'Honolulu'
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
@@ -24,7 +24,7 @@ const BRAND_TEAL = '#34a4b8';
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/20">
+    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/20 shadow-black/50">
       <div className="p-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
         <h3 className="font-russo text-lg text-slate-800 uppercase tracking-tight">{title}</h3>
         <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
@@ -132,38 +132,38 @@ export default function App() {
   const triggerSyncWebhook = async (advisorData) => {
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
+    // Safety Check
     if (!advisorData.fullName || advisorData.fullName.trim() === "") {
-      const msg = document.createElement('div');
-      msg.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
-      msg.innerText = "Error: Please enter a Display Name in Settings before syncing.";
-      document.body.appendChild(msg);
-      setTimeout(() => msg.remove(), 4000);
+      alert("Please enter a Display Name in Settings before syncing.");
       setActiveModal('profile');
       return;
     }
 
-    // ENHANCED PAYLOAD: Includes full object data to make WordPress rendering easier
+    // Build the detailed list of experiences for the WordPress Template
+    const experienceData = selectedIds.map(id => {
+      const item = itineraries.find(it => it.id === id);
+      return {
+        id: id,
+        title: item?.name,
+        image: item?.img,
+        link: item?.bookingUrl,
+        price: item?.price
+      };
+    });
+
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug,
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_experiences: selectedIds, // RAW ARRAY for Relationship fields
-      // New field: Full JSON blob for easy dynamic rendering of photos/links
-      experiences_json: JSON.stringify(selectedIds.map(id => {
-        const item = itineraries.find(it => it.id === id);
-        return {
-          id: id,
-          title: item?.name,
-          image: item?.img,
-          booking_link: item?.bookingUrl,
-          price: item?.price
-        };
-      })),
+      // Sending both formats for maximum compatibility
+      selected_ids: selectedIds.join(','), 
+      selected_experiences: selectedIds, // RAW Array
+      experiences_json: JSON.stringify(experienceData), // Ready for WP to parse
       registration_date: new Date().toISOString()
     };
 
-    console.log("SYNCING DATA TO MAKE.COM:", payload);
+    console.log("CRUISY SYNC START:", payload);
 
     setLoading(true);
     try {
@@ -189,7 +189,7 @@ export default function App() {
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed: ${e.message}. Ensure your Make.com Scenario is ON.`);
+      alert(`Sync failed: ${e.message}. Check Make.com Scenario Status.`);
       return false;
     }
   };
@@ -232,7 +232,7 @@ export default function App() {
         />
         
         <div className="relative z-10 max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
-          <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
+          <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50 shadow-black/50">
             
             <div className="pt-10 px-12 text-center">
               <h1 className="flex flex-col items-center justify-center gap-0">
@@ -251,12 +251,12 @@ export default function App() {
               <form onSubmit={handleAuth} className="space-y-3">
                 {authMode === 'signup' && (
                   <>
-                    <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
-                    <textarea className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm" placeholder="Tell us about yourself..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                    <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Display Name (e.g. Matt S.)" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+                    <textarea className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm shadow-sm" placeholder="Tell us about yourself..." rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
-                <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
+                <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+                <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 shadow-sm" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
                 
                 <button type="submit" disabled={loading} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-2">
                   {loading ? <Loader2 className="animate-spin" /> : (authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK')}
