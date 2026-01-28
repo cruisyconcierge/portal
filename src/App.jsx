@@ -130,10 +130,8 @@ export default function App() {
 
   // --- ACTIONS ---
   const triggerSyncWebhook = async (advisorData) => {
-    // UPDATED WITH YOUR LIVE MAKE.COM URL
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
-    // CRITICAL VALIDATION: Make.com/WordPress will fail if Title is empty.
     if (!advisorData.fullName || advisorData.fullName.trim() === "") {
       const msg = document.createElement('div');
       msg.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
@@ -144,12 +142,14 @@ export default function App() {
       return;
     }
 
+    // UPDATED PAYLOAD: sending selected_experiences as an Array [] instead of a string ""
+    // This is required for ACF Relationship fields to pick up the data automatically.
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug,
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_experiences: selectedIds.join(','),
+      selected_experiences: selectedIds, // RAW ARRAY
       registration_date: new Date().toISOString()
     };
 
@@ -232,7 +232,7 @@ export default function App() {
               <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase mt-4 font-bold">Advisor Portal</p>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-8 space-y-6">
               <div className="flex bg-slate-900/10 p-1 rounded-2xl">
                 <button onClick={() => setAuthMode('login')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
                 <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2.5 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
