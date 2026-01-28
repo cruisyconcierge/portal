@@ -130,10 +130,8 @@ export default function App() {
 
   // --- ACTIONS ---
   const triggerSyncWebhook = async (advisorData) => {
-    // UPDATED WITH YOUR LIVE MAKE.COM URL
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
-    // CRITICAL VALIDATION: Make.com/WordPress will fail if Title (fullName) is empty.
     if (!advisorData.fullName || advisorData.fullName.trim() === "") {
       const msg = document.createElement('div');
       msg.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
@@ -144,13 +142,24 @@ export default function App() {
       return;
     }
 
-    // payload is formatted exactly for WordPress ACF relationship fields
+    // ENHANCED PAYLOAD: Includes full object data to make WordPress rendering easier
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug,
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_experiences: selectedIds, // RAW ARRAY
+      selected_experiences: selectedIds, // RAW ARRAY for Relationship fields
+      // New field: Full JSON blob for easy dynamic rendering of photos/links
+      experiences_json: JSON.stringify(selectedIds.map(id => {
+        const item = itineraries.find(it => it.id === id);
+        return {
+          id: id,
+          title: item?.name,
+          image: item?.img,
+          booking_link: item?.bookingUrl,
+          price: item?.price
+        };
+      })),
       registration_date: new Date().toISOString()
     };
 
