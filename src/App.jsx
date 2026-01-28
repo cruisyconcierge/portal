@@ -91,24 +91,35 @@ export default function App() {
   const fetchItineraries = async () => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/itinerary?per_page=100&_embed`);
-      if (response.ok) {
-        const data = await response.json();
-        const mapped = data.map(item => ({
-          id: item.id,
-          name: item.title?.rendered || 'Untitled Activity',
-          description: item.content?.rendered || '', 
-          category: item.acf?.category || 'Experiences',
-          destinationTag: item.acf?.destination_tag || '',
-          price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
-          duration: item.acf?.duration || 'Flexible',
-          bookingUrl: item.acf?.booking_url || item.link,
-          img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
-        }));
-        setItineraries(mapped);
-      }
-    } catch (err) { console.warn("API Error:", err); }
+    const endpoints = ['itinerary', 'itineraries'];
+    let success = false;
+
+    for (const slug of endpoints) {
+      if (success) break;
+      try {
+        const response = await fetch(`${WP_BASE_URL}/wp-json/wp/v2/${slug}?per_page=100&_embed`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            const mapped = data.map(item => ({
+              id: item.id,
+              name: item.title?.rendered || 'Untitled Activity',
+              description: item.content?.rendered || '', 
+              category: item.acf?.category || 'Experiences',
+              destinationTag: item.acf?.destination_tag || '',
+              price: item.acf?.price ? `$${item.acf.price}` : 'Book Now',
+              duration: item.acf?.duration || 'Flexible',
+              bookingUrl: item.acf?.booking_url || item.link,
+              img: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
+            }));
+            setItineraries(mapped);
+            success = true;
+          }
+        }
+      } catch (err) { console.warn(`Failed fetch on /${slug}:`, err); }
+    }
+
+    if (!success) { setError("No experiences found. Ensure 'itinerary' CPT REST API is active."); }
     setLoading(false);
   };
 
@@ -126,13 +137,13 @@ export default function App() {
       return false;
     }
 
-    // RESTORED STABLE PAYLOAD (Exactly what we had when it was working)
+    // BACK TO STABLE PAYLOAD (String based for selected_experiences)
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug.trim().toLowerCase(),
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_experiences: selectedIds.join(','), // Simple comma-separated string
+      selected_experiences: selectedIds.join(','), // Simple comma string works best with standard WP Meta
       registration_date: new Date().toISOString()
     };
 
@@ -147,18 +158,18 @@ export default function App() {
       if (response.ok) {
         const confirmBox = document.createElement('div');
         confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
-        confirmBox.innerText = "Cruisy Portal Updated Successfully!";
+        confirmBox.innerText = "Official Portal Updated Successfully!";
         document.body.appendChild(confirmBox);
         setTimeout(() => confirmBox.remove(), 3000);
         setLoading(false);
         return true;
       } else {
-        throw new Error(`Server Error (${response.status})`);
+        throw new Error(`Sync Error (${response.status})`);
       }
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed: ${e.message}. Ensure Make.com Scenario is ON.`);
+      alert(`Sync failed. Check if Make.com scenario is ON.`);
       return false;
     }
   };
@@ -359,11 +370,16 @@ export default function App() {
         <Modal title="Curate Experiences" onClose={() => setActiveModal(null)}>
           <div className="space-y-6 pb-4">
             <div className="p-6 bg-[#34a4b8]/5 rounded-[2.5rem] border border-[#34a4b8]/10 text-center">
-                 <p className="text-sm font-medium text-slate-600">Select the best activities for <strong>{profile.destination}</strong> travelers.</p>
+                 <p className="text-sm font-medium text-slate-600">Select activities for <strong>{profile.destination}</strong> travelers.</p>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 {itineraries
-                  .filter(exp => exp.destinationTag?.toLowerCase().includes(profile.destination.toLowerCase()) || exp.name.toLowerCase().includes(profile.destination.toLowerCase()))
+                  .filter(exp => {
+                    const port = profile.destination.toLowerCase();
+                    const tag = String(exp.destinationTag || '').toLowerCase();
+                    const name = String(exp.name || '').toLowerCase();
+                    return tag.includes(port) || name.includes(port);
+                  })
                   .map((itinerary) => (
                   <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-5 rounded-[2.5rem] border-2 flex items-center gap-6 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-md' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
                       <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm border border-slate-200">
@@ -381,6 +397,9 @@ export default function App() {
                       </div>
                   </div>
                 ))}
+                {itineraries.length === 0 && !loading && (
+                    <div className="p-12 text-center text-slate-400 italic">No experiences found for this destination.</div>
+                )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-6 shadow-lg shadow-[#34a4b8]/20">Confirm Selections</button>
           </div>
