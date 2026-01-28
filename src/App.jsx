@@ -8,7 +8,6 @@ import {
 /**
  * ADVISOR PORTAL - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
- * Branding: Ultra-Bold "Cruisy" with Capital C
  * Persistence: Browser LocalStorage (Independent of WP Auth)
  * Automation: Make.com Webhook -> https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3
  */
@@ -18,19 +17,22 @@ const DESTINATIONS = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
+const ITINERARY_CPT = 'itinerary'; 
 const BRAND_TEAL = '#34a4b8';
 
 // MODAL COMPONENT (Defined outside App to ensure input focus remains during typing)
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
     <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white">
-      <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-        <h3 className="font-russo text-xl text-slate-800 uppercase tracking-tight">{title}</h3>
+      <div className="p-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+        <h3 className="font-russo text-lg text-slate-800 uppercase tracking-tight">{title}</h3>
         <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-          <X size={24} className="text-slate-400" />
+          <X size={20} className="text-slate-400" />
         </button>
       </div>
-      <div className="p-8 overflow-y-auto scrollbar-hide">{children}</div>
+      <div className="p-6 overflow-y-auto scrollbar-hide flex-1">
+        {children}
+      </div>
     </div>
   </div>
 );
@@ -78,7 +80,6 @@ export default function App() {
   const [copyStatus, setCopyStatus] = useState(false);
 
   // --- PERSISTENCE ---
-  // This effect ensures that every time a user types or selects an experience, it is saved instantly
   useEffect(() => {
     if (isLoggedIn && profile.slug) {
       localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
@@ -146,9 +147,7 @@ export default function App() {
         }),
       });
       
-      // If we are in the Preview Modal, show success message
       if (activeModal === 'preview') {
-        // Simple message box logic
         const confirmBox = document.createElement('div');
         confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
         confirmBox.innerText = "Profile Successfully Synced to WordPress!";
@@ -197,7 +196,6 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen font-sans flex items-center justify-center relative p-6 bg-slate-900">
-        {/* VIBRANT BACKGROUND - NO COLOR OVERLAY */}
         <div 
           className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000" 
           style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} 
