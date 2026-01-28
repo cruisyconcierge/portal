@@ -14,7 +14,7 @@ import {
  */
 
 const DESTINATIONS = [
-  'Key West', 'Miami', 'St Thomas', 'C/* */ozumel', 'Nassau', 'Orlando', 'Honolulu'
+  'Key West', 'Miami', 'St Thomas', 'Cozumel', 'Nassau', 'Orlando', 'Honolulu'
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
@@ -132,14 +132,14 @@ export default function App() {
   const triggerSyncWebhook = async (advisorData) => {
     const webhookUrl = "https://hook.us2.make.com/amuzvrmqyllbuctip7gayb94zwqbvat3"; 
     
-    // Safety Check
+    // Safety Check: WordPress REQUIRES a Title (fullName)
     if (!advisorData.fullName || advisorData.fullName.trim() === "") {
       alert("Please enter a Display Name in Settings before syncing.");
       setActiveModal('profile');
-      return;
+      return false;
     }
 
-    // Build the detailed list of experiences for the WordPress Template
+    // Prepare full object data for easier WordPress rendering
     const experienceData = selectedIds.map(id => {
       const item = itineraries.find(it => it.id === id);
       return {
@@ -156,10 +156,9 @@ export default function App() {
       slug: advisorData.slug,
       bio: advisorData.bio,
       destination: advisorData.destination,
-      // Sending both formats for maximum compatibility
       selected_ids: selectedIds.join(','), 
-      selected_experiences: selectedIds, // RAW Array
-      experiences_json: JSON.stringify(experienceData), // Ready for WP to parse
+      selected_experiences: selectedIds, 
+      experiences_json: JSON.stringify(experienceData),
       registration_date: new Date().toISOString()
     };
 
@@ -176,12 +175,12 @@ export default function App() {
       if (response.ok) {
         const confirmBox = document.createElement('div');
         confirmBox.className = "fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-[#34a4b8] text-white px-8 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-top-4";
-        confirmBox.innerText = "Cruisy Portal Synced Successfully!";
+        confirmBox.innerText = "Official Portal Updated Successfully!";
         document.body.appendChild(confirmBox);
         setTimeout(() => confirmBox.remove(), 3000);
       } else {
         const errorText = await response.text();
-        throw new Error(`Server Error (${response.status})`);
+        throw new Error(`Sync Error (${response.status})`);
       }
       
       setLoading(false);
@@ -189,7 +188,7 @@ export default function App() {
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed: ${e.message}. Check Make.com Scenario Status.`);
+      alert(`Sync failed: ${e.message}. Ensure your Make.com Scenario is active.`);
       return false;
     }
   };
@@ -211,6 +210,11 @@ export default function App() {
       }
       setIsLoggedIn(true);
     }
+  };
+
+  const handleUpdateProfile = async () => {
+    setActiveModal(null);
+    await triggerSyncWebhook(profile);
   };
 
   const toggleExperience = (id) => {
@@ -376,7 +380,10 @@ export default function App() {
                 onChange={e => setProfile(prev => ({...prev, bio: e.target.value}))} 
               />
             </div>
-            <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg shadow-[#34a4b8]/20">Update Advisor Profile</button>
+            <button onClick={handleUpdateProfile} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg shadow-[#34a4b8]/20 flex items-center justify-center gap-3">
+              {loading && <Loader2 className="animate-spin" size={20} />}
+              Update Advisor Profile
+            </button>
           </div>
         </Modal>
       )}
@@ -396,13 +403,7 @@ export default function App() {
                 )}
                 
                 {itineraries
-                  .filter(exp => {
-                    const port = profile.destination.toLowerCase();
-                    const tagMatch = String(exp.destinationTag).toLowerCase().includes(port);
-                    const descMatch = String(exp.description).toLowerCase().includes(port);
-                    const nameMatch = String(exp.name).toLowerCase().includes(port);
-                    return tagMatch || descMatch || nameMatch;
-                  })
+                  .filter(exp => exp.destinationTag?.toLowerCase().includes(profile.destination.toLowerCase()) || exp.name.toLowerCase().includes(profile.destination.toLowerCase()))
                   .map((itinerary) => (
                   <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-5 rounded-[2.5rem] border-2 flex items-center gap-6 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-md' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
                       <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden relative shadow-sm border border-slate-200">
