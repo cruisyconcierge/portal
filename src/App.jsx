@@ -142,7 +142,7 @@ export default function App() {
 
   // --- EMAIL GENERATION LOGIC ---
   const generatePublishEmail = () => {
-    const adminEmail = "concierge@cruisytravel.com"; 
+    const adminEmail = "hello@cruisytravel.com"; // Updated to your preferred address
     const activeThemeLabel = THEMES.find(t => t.id === profile.theme)?.label || 'Tropical';
     
     const selectedList = selectedIds.map(id => {
@@ -153,9 +153,10 @@ export default function App() {
     const subject = `🚢 ADVISOR PAGE REQUEST: @${profile.slug}`;
     const body = `Ahoy Cruisy Team! 🌴
 
-I've finished curating my advisor portal and I'm ready to dock! Please create/update my official page with the following details:
+I, as a Cruisy Ambassador, have finished curating my advisor portal and I'm ready to dock! Please create/update my official page with the following details:
 
 👤 ADVISOR PROFILE:
+- Status: Cruisy Ambassador
 - Name: ${profile.fullName}
 - Username/Page Name: ${profile.slug}
 - Personal Email (For Contact Button): ${profile.email}
@@ -189,7 +190,7 @@ ${profile.fullName}`;
   const handleAuth = (e) => {
     e.preventDefault();
     if (authMode === 'signup') {
-      if (!profile.fullName || !profile.slug) return alert("Please fill out your identity fields.");
+      if (!profile.fullName || !profile.slug || !profile.email) return alert("Please fill out your identity fields including your email.");
       setIsLoggedIn(true);
     } else {
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
@@ -249,6 +250,7 @@ ${profile.fullName}`;
                 {authMode === 'signup' && (
                   <>
                     <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Full Display Name" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+                    <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" type="email" placeholder="Personal Email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
                     <textarea className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm shadow-sm" placeholder="Short Bio" rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
