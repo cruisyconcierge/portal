@@ -142,7 +142,7 @@ export default function App() {
 
   // --- EMAIL GENERATION LOGIC ---
   const generatePublishEmail = () => {
-    const adminEmail = "hello@cruisytravel.com"; // Updated to your preferred address
+    const adminEmail = "hello@cruisytravel.com"; 
     const activeThemeLabel = THEMES.find(t => t.id === profile.theme)?.label || 'Tropical';
     
     const selectedList = selectedIds.map(id => {
@@ -289,7 +289,7 @@ ${profile.fullName}`;
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10 pb-20">
         <section className="bg-white rounded-[3.5rem] p-10 md:p-14 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none" style={{ color: activeTheme.color }}><Ship size={400} /></div>
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
@@ -495,7 +495,7 @@ ${profile.fullName}`;
                      <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Live Page URL</h6>
                      <div className="p-3 bg-white rounded-xl flex items-center gap-2 border border-slate-200 shadow-inner overflow-hidden">
                        <div className="flex-1 text-[10px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
-                       <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-lg transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
+                       <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-xl transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
                          {copyStatus ? <CircleCheck size={14} /> : <Clipboard size={14} />}
                        </button>
                      </div>
@@ -534,11 +534,6 @@ ${profile.fullName}`;
           </div>
         </Modal>
       )}
-
-      <footer className="mt-20 py-20 bg-white border-t border-slate-100 text-center opacity-40">
-        <img src={LOGO_URL} className="h-10 mx-auto grayscale mb-8" alt="Cruisy" />
-        <p className="text-[11px] font-russo uppercase tracking-[0.6em] text-slate-200 font-bold">Advisor Logistics Hub</p>
-      </footer>
 
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@300;400;500;700;900&family=Russo+One&display=swap');
