@@ -10,7 +10,7 @@ import {
  * ADVISOR PORTAL - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
  * Workflow: Manual Review via Pre-formatted Email
- * Branding: Russo One / Pacifico
+ * Branding: Russo One / Pacifico / Teal #34a4b8
  */
 
 const DESTINATIONS = [
@@ -26,6 +26,7 @@ const THEMES = [
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
+const LOGO_URL = 'https://cruisytravel.com/wp-content/uploads/2024/01/cropped-20240120_025955_0000.png';
 
 // MODAL COMPONENT
 const Modal = ({ title, children, onClose }) => (
@@ -71,7 +72,7 @@ export default function App() {
     return { 
       fullName: '', 
       slug: '', 
-      email: '', // Capturing personal email for contact button logic
+      email: '', 
       bio: 'Certified Travel Advisor with Cruisy Travel.', 
       destination: 'Key West', 
       password: '',
@@ -226,15 +227,18 @@ ${profile.fullName}`;
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen font-sans flex items-center justify-center relative p-6 bg-slate-900">
-        <div className="fixed inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} />
+        <div className="fixed inset-0 z-0 bg-cover bg-center opacity-60" style={{ backgroundImage: "url('https://cruisytravel.com/wp-content/uploads/2026/01/southernmost-scaled.avif')" }} />
         <div className="relative z-10 max-w-md w-full animate-in duration-700">
-          <div className="bg-white/90 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
+          <div className="bg-white/95 backdrop-blur-md rounded-[3rem] shadow-2xl overflow-hidden border border-white/50">
             <div className="pt-10 px-12 text-center">
-              <h1 className="flex flex-col items-center justify-center">
-                <span className="font-pacifico text-7xl text-slate-900 leading-[0.7] tracking-tighter">Cruisy</span>
-                <span className="font-russo text-4xl text-[#34a4b8] uppercase mt-3 tracking-widest">travel</span>
-              </h1>
-              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase mt-4 font-bold">Advisor Portal</p>
+              <div className="flex flex-col items-center justify-center mb-4">
+                <img src={LOGO_URL} className="h-20 w-auto mb-2" alt="Logo" />
+                <h1 className="font-russo text-4xl uppercase tracking-tighter leading-none">
+                  Cruisy <span className="text-[#34a4b8]">Travel</span>
+                </h1>
+              </div>
+              <p className="font-pacifico text-2xl text-[#34a4b8] -mt-1 mb-2">Cruisy Ambassador</p>
+              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase font-bold">Advisor Portal</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="flex bg-slate-900/10 p-1 rounded-2xl">
@@ -266,15 +270,20 @@ ${profile.fullName}`;
     <div className="min-h-screen bg-[#f1f5f9] font-sans text-slate-800">
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200 px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="font-pacifico text-4xl text-slate-800 leading-none">Cruisy</span>
-          <span className="font-russo text-3xl text-[#34a4b8] uppercase leading-none tracking-tighter">travel</span>
+          <img src={LOGO_URL} className="h-10 w-auto" alt="Logo" />
+          <div className="flex items-center gap-2">
+            <span className="font-russo text-2xl md:text-3xl text-slate-800 leading-none">Cruisy</span>
+            <span className="font-russo text-2xl md:text-3xl text-[#34a4b8] uppercase leading-none tracking-tighter">travel</span>
+          </div>
+          <div className="hidden lg:block h-6 w-px bg-slate-200 mx-2" />
+          <span className="hidden lg:block font-pacifico text-lg text-[#34a4b8] mt-1">Ambassador Hub</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
             <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Advisor</span>
             <span className="font-russo text-[#34a4b8] text-xl font-bold leading-none mt-1 uppercase tracking-tight">{profile.slug}</span>
           </div>
-          <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200 cursor-pointer"><LogOut size={20} /></button>
+          <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200 cursor-pointer border-none"><LogOut size={20} /></button>
         </div>
       </nav>
 
@@ -282,23 +291,26 @@ ${profile.fullName}`;
         <section className="bg-white rounded-[3.5rem] p-10 md:p-14 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none" style={{ color: activeTheme.color }}><Ship size={400} /></div>
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
+                <div className="inline-block px-4 py-1.5 bg-[#34a4b8]/10 rounded-full mb-2">
+                    <span className="font-pacifico text-[#34a4b8] text-xl">Cruisy Ambassador</span>
+                </div>
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span style={{ color: activeTheme.color }}>Control</span></h2>
                 <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
                   Design your custom experience page. We manually review and publish your profile at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
-                <button onClick={() => setActiveModal('profile')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer">
+                <button onClick={() => setActiveModal('profile')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
                     <Settings style={{ color: activeTheme.color }} className="group-hover:rotate-45 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Page Settings</span>
                 </button>
-                <button onClick={() => setActiveModal('itinerary')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer">
+                <button onClick={() => setActiveModal('itinerary')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
                     <Palmtree style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Experience Library</span>
                 </button>
                 <button onClick={() => setActiveModal('preview')} className="sm:col-span-2 p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
                     <Eye size={32} className="group-hover:scale-110 transition-transform" />
-                    <div className="flex flex-col items-start">
+                    <div className="flex flex-col items-start text-left">
                          <span className="font-russo text-xl uppercase tracking-tight leading-none">Live View</span>
                          <span className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1">Buoy Digital Card</span>
                     </div>
@@ -364,7 +376,7 @@ ${profile.fullName}`;
 
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bio (Hook)</label>
-              <textarea rows="3" className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none text-slate-800 shadow-sm focus:border-[#34a4b8]" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+              <textarea rows="3" className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium shadow-sm focus:border-[#34a4b8]" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
             </div>
 
             <button onClick={() => setActiveModal(null)} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg cursor-pointer border-none">Save Settings</button>
@@ -421,17 +433,18 @@ ${profile.fullName}`;
                     </div>
                     <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight tracking-tight">@{profile.slug}</h5>
                     <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Ambassador'}</p>
+                    {/* CRUISY AMBASSADOR IN PACIFICO */}
+                    <p className="font-pacifico text-[#34a4b8] text-sm mt-1">Cruisy Ambassador</p>
                     <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed font-medium">{profile.bio}</p>
                   </div>
 
                   <div className="px-4 py-2 border-y border-slate-50 flex items-center justify-between">
-                     {/* RENAMED TO CURATED EXPERIENCES */}
                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Curated Experiences</p>
                      <Compass size={10} className="text-slate-300" />
                   </div>
 
                   <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your buoy...</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your buoy...</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
@@ -449,27 +462,31 @@ ${profile.fullName}`;
                       );
                     })}
                     {selectedIds.length > 0 && (
-                      /* CHANGED TO CONTACT BUTTON FOR GUESTS */
-                      <button 
-                        onClick={() => {
-                          if (profile.email) {
-                            window.location.href = `mailto:${profile.email}?subject=Interested in ${profile.destination} with Cruisy`;
-                          } else {
-                            alert("This advisor hasn't provided a contact email yet.");
-                          }
-                        }}
-                        className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" 
-                        style={{ backgroundColor: activeTheme.color }}
-                      >
-                         <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Advisor'}
-                      </button>
+                      <div className="text-center">
+                        <button 
+                          onClick={() => {
+                            if (profile.email) {
+                              window.location.href = `mailto:${profile.email}?subject=Interested in ${profile.destination} with Cruisy`;
+                            } else {
+                              alert("Please add your personal email in Page Settings to activate the contact button.");
+                              setActiveModal('profile');
+                            }
+                          }}
+                          className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" 
+                          style={{ backgroundColor: activeTheme.color }}
+                        >
+                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Advisor'}
+                        </button>
+                        {/* CRUISY AMBASSADOR IN PACIFICO BELOW BUTTON */}
+                        <p className="font-pacifico text-[#34a4b8] text-xs mt-2">Cruisy Ambassador</p>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="space-y-5 pb-10">
+            <div className="space-y-5 pb-10 text-left">
                {!isSubmitted ? (
                  <>
                    <div className="p-6 bg-slate-50 rounded-[2.5rem] space-y-4 border border-slate-100 shadow-sm">
@@ -482,13 +499,13 @@ ${profile.fullName}`;
                      </div>
                      <div className="p-4 bg-white/50 rounded-xl space-y-2 border border-dashed border-slate-200">
                        <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                         Your page logic is active. Every link on your profile automatically includes your tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
+                         Your page logic is active. Every link on your profile automatically includes your unique tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
                        </p>
                      </div>
                    </div>
 
                    <div className="p-6 bg-amber-50 rounded-[2.5rem] border border-amber-100 flex gap-4 shadow-sm">
-                      <div className="p-2 bg-amber-400 rounded-full h-fit text-white"><Info size={16} /></div>
+                      <div className="p-2 bg-amber-400 rounded-full h-fit text-white flex-shrink-0"><Info size={16} /></div>
                       <div className="space-y-1">
                         <p className="text-xs font-bold text-amber-900 leading-none">Publishing Notice</p>
                         <p className="text-[10px] text-amber-800 leading-relaxed">Submitting will open your email to send your curation to Cruisy Admin. Setup time is <span className="font-bold">72 hours</span>.</p>
@@ -517,7 +534,7 @@ ${profile.fullName}`;
       )}
 
       <footer className="mt-20 py-20 bg-white border-t border-slate-100 text-center opacity-40">
-        <img src="https://cruisytravel.com/wp-content/uploads/2024/01/cropped-20240120_025955_0000.png" className="h-10 mx-auto grayscale mb-8" alt="Cruisy" />
+        <img src={LOGO_URL} className="h-10 mx-auto grayscale mb-8" alt="Cruisy" />
         <p className="text-[11px] font-russo uppercase tracking-[0.6em] text-slate-200 font-bold">Advisor Logistics Hub</p>
       </footer>
 
