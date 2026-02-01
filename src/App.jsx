@@ -137,14 +137,13 @@ export default function App() {
       return false;
     }
 
-    // BACK TO STABLE PAYLOAD (String based for selected_experiences)
-    // This format worked with your previous Make.com/WordPress connection
+    // STABLE PAYLOAD (String based for selected_experiences)
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug.trim().toLowerCase(),
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_experiences: selectedIds.join(','), // Simple comma string
+      selected_experiences: (selectedIds || []).join(','), // Comma string is safest for mapping
       registration_date: new Date().toISOString()
     };
 
@@ -172,7 +171,7 @@ export default function App() {
     } catch (e) {
       console.error("Webhook Error", e);
       setLoading(false);
-      alert(`Sync failed. Check if Make.com scenario is ON.`);
+      alert(`Sync failed. Check if Make.com scenario is ON and scenario is active.`);
       return false;
     }
   };
@@ -201,8 +200,9 @@ export default function App() {
   };
 
   const handleUpdateProfile = async () => {
-    setActiveModal(null);
-    await triggerSyncWebhook(profile);
+    // Trigger creation/update in WordPress immediately on save
+    const success = await triggerSyncWebhook(profile);
+    if (success) setActiveModal(null);
   };
 
   const toggleExperience = (id) => {
@@ -274,7 +274,7 @@ export default function App() {
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
             <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Advisor</span>
-            <span className="font-russo text-[#34a4b8] text-xl font-bold leading-none mt-1 uppercase tracking-tight">{profile.slug}</span>
+            <span className="font-russo text-[#34a4b8] text-2xl font-bold leading-none mt-1 uppercase tracking-tighter">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200"><LogOut size={20} /></button>
         </div>
