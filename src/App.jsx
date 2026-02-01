@@ -138,12 +138,13 @@ export default function App() {
     }
 
     // BACK TO STABLE PAYLOAD (String based for selected_experiences)
+    // This format worked with your previous Make.com/WordPress connection
     const payload = {
       fullName: advisorData.fullName.trim(),
       slug: advisorData.slug.trim().toLowerCase(),
       bio: advisorData.bio,
       destination: advisorData.destination,
-      selected_experiences: selectedIds.join(','), // Simple comma string works best with standard WP Meta
+      selected_experiences: selectedIds.join(','), // Simple comma string
       registration_date: new Date().toISOString()
     };
 
@@ -181,10 +182,11 @@ export default function App() {
     if (authMode === 'signup') {
       if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
       
-      // Save locally first to prevent session loss
+      // Save locally first
       localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
       localStorage.setItem('cruisy_current_session_slug', profile.slug);
       
+      // Trigger creation in WordPress
       const success = await triggerSyncWebhook(profile);
       if (success) setIsLoggedIn(true);
     } else {
@@ -439,7 +441,7 @@ export default function App() {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
                       return (
-                        <div key={id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col shadow-sm group transition-transform active:scale-[0.98]">
+                        <div key={id} className="p-3 bg-white border border-slate-100 rounded-2xl overflow-hidden flex flex-col shadow-sm group transition-transform active:scale-[0.98]">
                           {it.img && (
                             <div className="h-20 w-full overflow-hidden">
                                <img src={it.img} className="w-full h-full object-cover" alt={it.name} />
