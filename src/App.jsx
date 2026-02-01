@@ -147,6 +147,8 @@ export default function App() {
       registration_date: new Date().toISOString()
     };
 
+    console.log("CRUISY SYNC START:", payload);
+
     setLoading(true);
     try {
       const response = await fetch(webhookUrl, {
@@ -178,6 +180,11 @@ export default function App() {
     e.preventDefault();
     if (authMode === 'signup') {
       if (!profile.fullName || !profile.slug) return alert("Required fields missing.");
+      
+      // Save locally first to prevent session loss
+      localStorage.setItem(`cruisy_user_${profile.slug}`, JSON.stringify({ profile, selectedIds }));
+      localStorage.setItem('cruisy_current_session_slug', profile.slug);
+      
       const success = await triggerSyncWebhook(profile);
       if (success) setIsLoggedIn(true);
     } else {
@@ -265,7 +272,7 @@ export default function App() {
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
             <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Advisor</span>
-            <span className="font-pacifico text-[#34a4b8] text-2xl leading-none mt-1 uppercase">{profile.slug}</span>
+            <span className="font-russo text-[#34a4b8] text-xl font-bold leading-none mt-1 uppercase tracking-tight">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200"><LogOut size={20} /></button>
         </div>
