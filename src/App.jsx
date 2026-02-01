@@ -71,6 +71,7 @@ export default function App() {
     return { 
       fullName: '', 
       slug: '', 
+      email: '', // Capturing personal email for contact button logic
       bio: 'Certified Travel Advisor with Cruisy Travel.', 
       destination: 'Key West', 
       password: '',
@@ -156,6 +157,7 @@ I've finished curating my advisor portal and I'm ready to dock! Please create/up
 👤 ADVISOR PROFILE:
 - Name: ${profile.fullName}
 - Username/Page Name: ${profile.slug}
+- Personal Email (For Contact Button): ${profile.email}
 - Base Port: ${profile.destination}
 - Theme Selected: ${activeThemeLabel}
 
@@ -202,14 +204,14 @@ ${profile.fullName}`;
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('cruisy_current_session_slug');
-    setProfile({ fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
+    setProfile({ fullName: '', slug: '', email: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
     setSelectedIds([]);
   };
 
   const switchAuthMode = (mode) => {
     setAuthMode(mode);
     if (mode === 'signup') {
-      setProfile({ fullName: '', slug: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
+      setProfile({ fullName: '', slug: '', email: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
       setSelectedIds([]);
     }
   };
@@ -324,9 +326,15 @@ ${profile.fullName}`;
       {activeModal === 'profile' && (
         <Modal title="Portal Settings" onClose={() => setActiveModal(null)}>
           <div className="space-y-6 pb-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Display Name</label>
-              <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Display Name</label>
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personal Email</label>
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="Required for contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -417,7 +425,8 @@ ${profile.fullName}`;
                   </div>
 
                   <div className="px-4 py-2 border-y border-slate-50 flex items-center justify-between">
-                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Selected Itineraries</p>
+                     {/* RENAMED TO CURATED EXPERIENCES */}
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Curated Experiences</p>
                      <Compass size={10} className="text-slate-300" />
                   </div>
 
@@ -440,8 +449,19 @@ ${profile.fullName}`;
                       );
                     })}
                     {selectedIds.length > 0 && (
-                      <button className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer" style={{ backgroundColor: activeTheme.color }}>
-                         Book Full Itinerary
+                      /* CHANGED TO CONTACT BUTTON FOR GUESTS */
+                      <button 
+                        onClick={() => {
+                          if (profile.email) {
+                            window.location.href = `mailto:${profile.email}?subject=Interested in ${profile.destination} with Cruisy`;
+                          } else {
+                            alert("This advisor hasn't provided a contact email yet.");
+                          }
+                        }}
+                        className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" 
+                        style={{ backgroundColor: activeTheme.color }}
+                      >
+                         <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Advisor'}
                       </button>
                     )}
                   </div>
