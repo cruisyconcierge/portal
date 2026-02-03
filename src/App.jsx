@@ -140,38 +140,38 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  // --- EMAIL GENERATION LOGIC ---
+  // --- EMAIL GENERATION LOGIC (PROFESSIONAL & FRIENDLY) ---
   const generatePublishEmail = () => {
     const adminEmail = "hello@cruisytravel.com"; 
     const activeThemeLabel = THEMES.find(t => t.id === profile.theme)?.label || 'Tropical';
     
     const selectedList = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
-      return `📍 ${it ? it.name : id} (ID: ${id})`;
+      return `- ${it ? it.name : id} (ID: ${id})`;
     }).join('\n');
 
-    const subject = `🚢 ADVISOR PAGE REQUEST: @${profile.slug}`;
-    const body = `Ahoy Cruisy Team! 🌴
+    const subject = `Ambassador Profile Submission: ${profile.fullName} (@${profile.slug})`;
+    const body = `Hello Cruisy Team,
 
-I, as a Cruisy Ambassador, have finished curating my advisor portal and I'm ready to dock! Please create/update my official page with the following details:
+I've completed the curation of my Ambassador profile and would like to submit it for review and publication. Please find my account details and selected experiences below:
 
-👤 ADVISOR PROFILE:
+PROFILE INFORMATION:
 - Status: Cruisy Ambassador
-- Name: ${profile.fullName}
-- Username/Page Name: ${profile.slug}
-- Personal Email (For Contact Button): ${profile.email}
-- Base Port: ${profile.destination}
-- Theme Selected: ${activeThemeLabel}
+- Display Name: ${profile.fullName}
+- Username/URL Slug: ${profile.slug}
+- Primary Contact Email: ${profile.email}
+- Primary Destination: ${profile.destination}
+- Selected Profile Theme: ${activeThemeLabel}
 
-📝 BIO HOOK:
+BIO / HOOK:
 "${profile.bio}"
 
-🏝️ CURATED EXPERIENCES:
+CURATED EXPERIENCES:
 ${selectedList || "No experiences selected yet."}
 
-I understand it will take up to 72 hours for my profile to go live and that I'll receive an email confirmation when it's docked! ⚓
+I understand that the standard setup time is approximately 72 hours and look forward to receiving the confirmation email once my page is live.
 
-Cheers,
+Thank you,
 ${profile.fullName}`;
 
     return `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -427,7 +427,6 @@ ${profile.fullName}`;
             <div className="flex justify-center">
               <div className="w-[260px] h-[540px] bg-slate-900 rounded-[3rem] p-2 relative border-[6px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
-                  {/* THEME STRIPE */}
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
                   <div className={`p-5 text-center ${activeTheme.bg}`}>
                     <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}>
@@ -435,7 +434,6 @@ ${profile.fullName}`;
                     </div>
                     <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight tracking-tight">@{profile.slug}</h5>
                     <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Ambassador'}</p>
-                    {/* CRUISY AMBASSADOR IN PACIFICO */}
                     <p className="font-pacifico text-[#34a4b8] text-sm mt-1">Cruisy Ambassador</p>
                     <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed font-medium">{profile.bio}</p>
                   </div>
@@ -446,7 +444,7 @@ ${profile.fullName}`;
                   </div>
 
                   <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your buoy...</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your profile...</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
@@ -468,7 +466,7 @@ ${profile.fullName}`;
                         <button 
                           onClick={() => {
                             if (profile.email) {
-                              window.location.href = `mailto:${profile.email}?subject=Interested in ${profile.destination} with Cruisy`;
+                              window.location.href = `mailto:${profile.email}?subject=Contact Request from Cruisy Page`;
                             } else {
                               alert("Please add your personal email in Page Settings to activate the contact button.");
                               setActiveModal('profile');
@@ -477,9 +475,8 @@ ${profile.fullName}`;
                           className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" 
                           style={{ backgroundColor: activeTheme.color }}
                         >
-                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Advisor'}
+                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Ambassador'}
                         </button>
-                        {/* CRUISY AMBASSADOR IN PACIFICO BELOW BUTTON */}
                         <p className="font-pacifico text-[#34a4b8] text-xs mt-2">Cruisy Ambassador</p>
                       </div>
                     )}
@@ -495,13 +492,13 @@ ${profile.fullName}`;
                      <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Live Page URL</h6>
                      <div className="p-3 bg-white rounded-xl flex items-center gap-2 border border-slate-200 shadow-inner overflow-hidden">
                        <div className="flex-1 text-[10px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
-                       <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-xl transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
+                       <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-lg transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
                          {copyStatus ? <CircleCheck size={14} /> : <Clipboard size={14} />}
                        </button>
                      </div>
                      <div className="p-4 bg-white/50 rounded-xl space-y-2 border border-dashed border-slate-200">
                        <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                         Your page logic is active. Every link on your profile automatically includes your unique tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
+                         Your page logic is active. Every link on your profile automatically includes your tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
                        </p>
                      </div>
                    </div>
