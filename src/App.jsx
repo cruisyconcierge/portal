@@ -3,7 +3,7 @@ import {
   Palmtree, User, MapPin, Eye, Share2, Plus, Minus,
   ExternalLink, ChevronRight, Clipboard, Send, Loader2, CircleAlert,
   LogOut, CircleCheck, Navigation, Ship, Anchor, Waves, Info, X, Settings, 
-  Sun, Umbrella, Sunset, Compass, Sparkles, Mail
+  Sun, Umbrella, Sunset, Compass, Sparkles, Mail, BookOpen, Lightbulb, TrendingUp, Zap
 } from 'lucide-react';
 
 /**
@@ -140,7 +140,7 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  // --- EMAIL GENERATION LOGIC (PROFESSIONAL & FRIENDLY) ---
+  // --- EMAIL GENERATION LOGIC ---
   const generatePublishEmail = () => {
     const adminEmail = "hello@cruisytravel.com"; 
     const activeThemeLabel = THEMES.find(t => t.id === profile.theme)?.label || 'Tropical';
@@ -164,7 +164,7 @@ PROFILE INFORMATION:
 - Selected Profile Theme: ${activeThemeLabel}
 
 BIO / HOOK:
-"${profile.bio}"
+"${profile.bio || "No bio provided"}"
 
 CURATED EXPERIENCES:
 ${selectedList || "No experiences selected yet."}
@@ -251,7 +251,7 @@ ${profile.fullName}`;
                   <>
                     <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Full Display Name" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
                     <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" type="email" placeholder="Personal Email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
-                    <textarea className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm shadow-sm" placeholder="Short Bio" rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                    <textarea className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 font-medium text-sm shadow-sm" placeholder="Short Bio (Optional)" rows="2" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
                   </>
                 )}
                 <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
@@ -310,7 +310,11 @@ ${profile.fullName}`;
                     <Palmtree style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Experience Library</span>
                 </button>
-                <button onClick={() => setActiveModal('preview')} className="sm:col-span-2 p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
+                <button onClick={() => setActiveModal('resources')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
+                    <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
+                    <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
+                </button>
+                <button onClick={() => setActiveModal('preview')} className="p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
                     <Eye size={32} className="group-hover:scale-110 transition-transform" />
                     <div className="flex flex-col items-start text-left">
                          <span className="font-russo text-xl uppercase tracking-tight leading-none">Live View</span>
@@ -347,7 +351,7 @@ ${profile.fullName}`;
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personal Email</label>
-                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="Required for contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="For notifications & contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
               </div>
             </div>
             
@@ -377,7 +381,7 @@ ${profile.fullName}`;
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bio (Hook)</label>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bio Hook (Optional)</label>
               <textarea rows="3" className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium shadow-sm focus:border-[#34a4b8]" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
             </div>
 
@@ -412,11 +416,49 @@ ${profile.fullName}`;
                       </div>
                   </div>
                 ))}
-                {itineraries.length === 0 && !loading && (
-                  <div className="py-10 text-center text-slate-400 italic">No itineraries found for your destination.</div>
-                )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-4 shadow-lg border-none cursor-pointer">Confirm Selections</button>
+          </div>
+        </Modal>
+      )}
+
+      {activeModal === 'resources' && (
+        <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
+          <div className="space-y-6 pb-6">
+            <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-[2rem] flex gap-4">
+              <div className="p-3 bg-emerald-500 rounded-2xl text-white h-fit shadow-lg shadow-emerald-200">
+                <TrendingUp size={24} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-russo text-emerald-900 text-sm uppercase">Success Stories</h4>
+                <p className="text-xs text-emerald-700 leading-relaxed">See how our top Cruisy Ambassadors are docking major bookings using their custom buoys.</p>
+              </div>
+            </div>
+
+            <div className="p-5 bg-blue-50 border border-blue-100 rounded-[2rem] flex gap-4">
+              <div className="p-3 bg-blue-500 rounded-2xl text-white h-fit shadow-lg shadow-blue-200">
+                <Zap size={24} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-russo text-blue-900 text-sm uppercase">Fresh Vault Updates</h4>
+                <p className="text-xs text-blue-700 leading-relaxed">Stay updated with the latest Key West and Caribbean itineraries added to our collection.</p>
+              </div>
+            </div>
+
+            <div className="p-5 bg-amber-50 border border-amber-100 rounded-[2rem] flex gap-4">
+              <div className="p-3 bg-amber-500 rounded-2xl text-white h-fit shadow-lg shadow-amber-200">
+                <Lightbulb size={24} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-russo text-amber-900 text-sm uppercase">Ambassador Pro Tips</h4>
+                <p className="text-xs text-amber-700 leading-relaxed">Maximize your reach. Learn the best strategies for sharing your unique tracking link across social media.</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-[2rem] text-center border border-slate-100">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Questions?</p>
+              <button onClick={() => window.location.href='mailto:hello@cruisytravel.com'} className="text-[#34a4b8] font-russo text-xs hover:underline uppercase">Connect with Support</button>
+            </div>
           </div>
         </Modal>
       )}
@@ -444,7 +486,7 @@ ${profile.fullName}`;
                   </div>
 
                   <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your profile...</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your buoy...</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
@@ -466,7 +508,7 @@ ${profile.fullName}`;
                         <button 
                           onClick={() => {
                             if (profile.email) {
-                              window.location.href = `mailto:${profile.email}?subject=Contact Request from Cruisy Page`;
+                              window.location.href = `mailto:${profile.email}?subject=Interested in ${profile.destination} with Cruisy`;
                             } else {
                               alert("Please add your personal email in Page Settings to activate the contact button.");
                               setActiveModal('profile');
@@ -498,7 +540,7 @@ ${profile.fullName}`;
                      </div>
                      <div className="p-4 bg-white/50 rounded-xl space-y-2 border border-dashed border-slate-200">
                        <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                         Your page logic is active. Every link on your profile automatically includes your tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
+                         Your page logic is active. Every link on your profile automatically includes your unique tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
                        </p>
                      </div>
                    </div>
