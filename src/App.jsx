@@ -424,40 +424,49 @@ ${profile.fullName}`;
 
       {activeModal === 'resources' && (
         <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
-          <div className="space-y-6 pb-6">
-            <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-[2rem] flex gap-4">
-              <div className="p-3 bg-emerald-500 rounded-2xl text-white h-fit shadow-lg shadow-emerald-200">
-                <TrendingUp size={24} />
+          <div className="space-y-6 pb-6 text-center">
+            <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4">
+              <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Grow Your Travel Business</h4>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+                Access success stories, product updates, and expert tips to maximize your Ambassador influence.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
+              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
+                <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><TrendingUp size={20} /></div>
+                <div>
+                  <h5 className="font-russo text-xs uppercase text-slate-800">Success Stories</h5>
+                  <p className="text-[10px] text-slate-400">See how top Ambassadors are booking more.</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h4 className="font-russo text-emerald-900 text-sm uppercase">Success Stories</h4>
-                <p className="text-xs text-emerald-700 leading-relaxed">See how our top Cruisy Ambassadors are docking major bookings using their custom buoys.</p>
+              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
+                <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><Zap size={20} /></div>
+                <div>
+                  <h5 className="font-russo text-xs uppercase text-slate-800">Product Updates</h5>
+                  <p className="text-[10px] text-slate-400">Latest itineraries and vault additions.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><Lightbulb size={20} /></div>
+                <div>
+                  <h5 className="font-russo text-xs uppercase text-slate-800">Expert Tips</h5>
+                  <p className="text-[10px] text-slate-400">Pro strategies for link sharing.</p>
+                </div>
               </div>
             </div>
 
-            <div className="p-5 bg-blue-50 border border-blue-100 rounded-[2rem] flex gap-4">
-              <div className="p-3 bg-blue-500 rounded-2xl text-white h-fit shadow-lg shadow-blue-200">
-                <Zap size={24} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-russo text-blue-900 text-sm uppercase">Fresh Vault Updates</h4>
-                <p className="text-xs text-blue-700 leading-relaxed">Stay updated with the latest Key West and Caribbean itineraries added to our collection.</p>
-              </div>
+            <div className="pt-6">
+              <button 
+                onClick={() => window.open('https://cruisytravel.com/advisor-resources', '_blank')}
+                className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 cursor-pointer border-none"
+              >
+                <ExternalLink size={20} /> View All Resources
+              </button>
             </div>
 
-            <div className="p-5 bg-amber-50 border border-amber-100 rounded-[2rem] flex gap-4">
-              <div className="p-3 bg-amber-500 rounded-2xl text-white h-fit shadow-lg shadow-amber-200">
-                <Lightbulb size={24} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-russo text-amber-900 text-sm uppercase">Ambassador Pro Tips</h4>
-                <p className="text-xs text-amber-700 leading-relaxed">Maximize your reach. Learn the best strategies for sharing your unique tracking link across social media.</p>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-[2rem] text-center border border-slate-100">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Questions?</p>
-              <button onClick={() => window.location.href='mailto:hello@cruisytravel.com'} className="text-[#34a4b8] font-russo text-xs hover:underline uppercase">Connect with Support</button>
+            <div className="pt-4 border-t border-slate-50">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Cruisy Travel Ambassador Hub</p>
             </div>
           </div>
         </Modal>
@@ -469,6 +478,7 @@ ${profile.fullName}`;
             <div className="flex justify-center">
               <div className="w-[260px] h-[540px] bg-slate-900 rounded-[3rem] p-2 relative border-[6px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
+                  {/* THEME STRIPE */}
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
                   <div className={`p-5 text-center ${activeTheme.bg}`}>
                     <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}>
