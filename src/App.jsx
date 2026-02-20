@@ -145,31 +145,15 @@ export default function App() {
   const hasExperiences = selectedIds.length > 0;
   const canFinalize = isProfileComplete && hasExperiences;
 
-  // --- EMAIL COMPILATION (PERSONALIZED PRO-NOUNS) ---
+  // --- EMAIL COMPILATION ---
   const handleOpenEmail = () => {
     const experiencesList = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
       return `- ${it ? it.name : id}`;
-    }).join('\n');
+    }).join('\r\n');
 
     const subject = `Ambassador Profile Setup: ${profile.fullName}`;
-    const body = `Hello Cruisy Team,
-
-I have finished my curation. Please set up my profile with the following details:
-
-Advisor Name: ${profile.fullName}
-Advisor Email: ${profile.email}
-Username/URL: cruisytravel.com/${profile.slug}
-Base Port: ${profile.destination}
-Theme: ${profile.theme}
-
-Bio Hook:
-${profile.bio}
-
-Curated Experiences:
-${experiencesList}
-
-Thank you!`;
+    const body = `Hello Cruisy Team,\r\n\r\nI have finished my curation. Please set up my profile with the following details:\r\n\r\nAdvisor Name: ${profile.fullName}\r\nAdvisor Email: ${profile.email}\r\nUsername/URL: cruisytravel.com/${profile.slug}\r\nBase Port: ${profile.destination}\r\nTheme: ${profile.theme}\r\n\r\nBio Hook:\r\n${profile.bio}\r\n\r\nCurated Experiences:\r\n${experiencesList}\r\n\r\nThank you!`;
     
     const mailto = `mailto:hello@cruisytravel.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailto, '_blank');
@@ -181,20 +165,7 @@ Thank you!`;
       return `- ${it ? it.name : id}`;
     }).join('\n');
 
-    return `CRUISY AMBASSADOR PROGRAM SUBMISSION
---------------------------------------
-Advisor Name: ${profile.fullName}
-Advisor Email: ${profile.email}
-Target URL: cruisytravel.com/${profile.slug}
-Base Port: ${profile.destination}
-Theme Choice: ${profile.theme}
-
-BIO HOOK:
-${profile.bio}
-
-CURATED EXPERIENCES:
-${experiencesList}
---------------------------------------`;
+    return `CRUISY AMBASSADOR PROGRAM SUBMISSION\n--------------------------------------\nAdvisor Name: ${profile.fullName}\nAdvisor Email: ${profile.email}\nTarget URL: cruisytravel.com/${profile.slug}\nBase Port: ${profile.destination}\nTheme Choice: ${profile.theme}\n\nBIO HOOK:\n${profile.bio}\n\nCURATED EXPERIENCES:\n${experiencesList}\n--------------------------------------`;
   };
 
   const handleCopyToClipboard = () => {
@@ -467,7 +438,7 @@ ${experiencesList}
                 <Sparkles size={32} />
               </div>
               <h4 className="font-russo text-2xl text-slate-900 uppercase mb-2">Coming Soon</h4>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+              <p className="text-sm text-slate-50 leading-relaxed max-w-sm mx-auto">
                 We are currently building our Ambassador Toolkit. This section will soon feature success stories, product updates, and growth tips for you as a Travel Advisor.
               </p>
             </div>
@@ -528,7 +499,7 @@ ${experiencesList}
                          onClick={() => setActiveModal('itinerary')}
                          className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-100 text-slate-600 rounded-2xl font-russo text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all border-none cursor-pointer"
                        >
-                         <Plus size={14} className="text-[#34a4b8]" /> Add More Curated Experiences
+                         <Plus size={14} className="text-[#34a4b8]" /> Manage Curated Experiences
                        </button>
                     </div>
 
