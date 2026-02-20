@@ -148,7 +148,7 @@ export default function App() {
     }).join('%0D%0A');
 
     const subject = encodeURIComponent(`Ambassador Profile Setup: ${profile.fullName}`);
-    const body = encodeURIComponent(`Hello Cruisy Team,%0D%0A%0D%0AWe have finished our curation. Please set up our profile with the following details:%0D%0A%0D%0AAdvisor Name: ${profile.fullName}%0D%0AAdvisor Email: ${profile.email}%0D%0AUsername/URL: cruisytravel.com/${profile.slug}%0D%0ABase Port: ${profile.destination}%0D%0ATheme: ${profile.theme}%0D%0A%0D%0ABio Hook:%0D%0A${profile.bio}%0D%0A%0D%0ASelected Experiences:%0D%0A${experiencesList}%0D%0A%0D%0AThank you!`);
+    const body = encodeURIComponent(`Hello Cruisy Team,%0D%0A%0D%0AWe have finished our curation. Please set up our profile with the following details:%0D%0A%0D%0AAdvisor Name: ${profile.fullName}%0D%0AAdvisor Email: ${profile.email}%0D%0AUsername/URL: cruisytravel.com/${profile.slug}%0D%0ABase Port: ${profile.destination}%0D%0ATheme: ${profile.theme}%0D%0A%0D%0ABio Hook:%0D%0A${profile.bio}%0D%0A%0D%0ACurated Experiences:%0D%0A${experiencesList}%0D%0A%0D%0AThank you!`);
     
     return `mailto:hello@cruisytravel.com?subject=${subject}&body=${body}`;
   };
@@ -170,7 +170,7 @@ Theme Choice: ${profile.theme}
 BIO HOOK:
 ${profile.bio || "None provided"}
 
-SELECTED EXPERIENCES:
+CURATED EXPERIENCES:
 ${experiencesList || "No experiences selected"}
 --------------------------------------`;
   };
@@ -286,7 +286,7 @@ ${experiencesList || "No experiences selected"}
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10 pb-32">
+      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10 pb-20">
         {/* HERO HEADER */}
         <section className="bg-white rounded-[3.5rem] p-10 md:p-14 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none" style={{ color: activeTheme.color }}><Ship size={400} /></div>
@@ -312,7 +312,7 @@ ${experiencesList || "No experiences selected"}
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN: IDENTITY & THEME */}
+          {/* LEFT COLUMN: IDENTITY */}
           <div className="lg:col-span-5 space-y-8">
             <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-8 animate-in">
               <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
@@ -330,7 +330,7 @@ ${experiencesList || "No experiences selected"}
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Ambassador Username</label>
                   <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                  <p className="text-[9px] text-[#34a4b8] font-bold mt-1 px-1">Your personal URL link</p>
+                  <p className="text-[9px] text-[#34a4b8] font-bold mt-1 px-1">Defines your personal link: cruisytravel.com/{profile.slug || 'username'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Personal Email</label>
@@ -349,19 +349,14 @@ ${experiencesList || "No experiences selected"}
               </div>
             </section>
 
-            <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-6 animate-in">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Layout size={24} /></div>
-                <h3 className="font-russo text-lg uppercase text-slate-800">Visual Theme</h3>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
-                {THEMES.map(t => (
-                  <button key={t.id} onClick={() => setProfile({...profile, theme: t.id})} className={`p-3 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all cursor-pointer ${profile.theme === t.id ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-sm' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}>
-                    <t.icon size={18} style={{ color: profile.theme === t.id ? t.color : 'inherit' }} />
-                  </button>
-                ))}
-              </div>
-            </section>
+            {/* SEND BUTTON REPLACING STATUS FOOTER */}
+            <button 
+               onClick={() => { setActiveModal('preview'); setCurrentStep('disclosure'); }}
+               disabled={!profile.fullName || !profile.slug || !profile.email}
+               className={`w-full py-6 rounded-3xl font-russo text-lg uppercase tracking-widest transition-all border-none cursor-pointer shadow-2xl ${profile.fullName && profile.slug && profile.email ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/30 hover:scale-[1.02]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+            >
+               Finish & Send to Setup Team
+            </button>
           </div>
 
           {/* RIGHT COLUMN: EXPERIENCES */}
@@ -371,11 +366,11 @@ ${experiencesList || "No experiences selected"}
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Palmtree size={24} /></div>
                   <div>
-                    <h3 className="font-russo text-lg uppercase text-slate-800">Itinerary Curation</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Docked in {profile.destination}</p>
+                    <h3 className="font-russo text-lg uppercase text-slate-800">Curated Experiences</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Selected in {profile.destination}: {selectedIds.length}</p>
                   </div>
                 </div>
-                <span className="px-4 py-1.5 bg-[#34a4b8] text-white rounded-full font-russo text-[10px] uppercase tracking-widest">{selectedIds.length} Selected</span>
+                <span className="px-4 py-1.5 bg-[#34a4b8] text-white rounded-full font-russo text-[10px] uppercase tracking-widest">Active Pool</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[600px] pr-2 scrollbar-hide">
@@ -397,33 +392,13 @@ ${experiencesList || "No experiences selected"}
                       </div>
                   </div>
                 )) : (
-                  <div className="md:col-span-2 py-20 text-center text-slate-400 italic">Syncing with WP REST API...</div>
+                  <div className="md:col-span-2 py-20 text-center text-slate-400 italic">Connecting to Experiences...</div>
                 )}
               </div>
             </section>
           </div>
         </div>
       </main>
-
-      {/* FIXED FOOTER ACTION BAR */}
-      <footer className="fixed bottom-0 left-0 right-0 p-5 bg-white/90 backdrop-blur-xl border-t border-slate-200 z-[90] shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 px-4 md:px-8">
-            <div className="hidden lg:flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]"><ShieldCheck size={20} /></div>
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Curation Status</p>
-                <p className="font-russo text-xs text-slate-800 uppercase leading-none">{profile.fullName || 'Unidentified Advisor'} | {selectedIds.length} Experiences</p>
-              </div>
-            </div>
-            <button 
-               onClick={() => { setActiveModal('preview'); setCurrentStep('disclosure'); }}
-               disabled={!profile.fullName || !profile.slug || !profile.email}
-               className={`flex-1 md:flex-none px-16 py-5 rounded-2xl font-russo text-base uppercase tracking-widest transition-all border-none cursor-pointer shadow-xl ${profile.fullName && profile.slug && profile.email ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/30 hover:scale-[1.02]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
-            >
-               Finalize and Send to hello@cruisytravel.com
-            </button>
-         </div>
-      </footer>
 
       {/* MODALS */}
       {activeModal === 'resources' && (
@@ -444,7 +419,7 @@ ${experiencesList || "No experiences selected"}
       )}
 
       {activeModal === 'preview' && (
-        <Modal title="Setup Submission" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
+        <Modal title="Digital Advisor Preview" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-8">
             <div className="flex justify-center">
               <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3rem] p-2 relative border-[8px] border-slate-800 shadow-xl shadow-black/40">
@@ -473,6 +448,37 @@ ${experiencesList || "No experiences selected"}
             </div>
             
             <div className="flex flex-col h-full min-h-[580px]">
+               {currentStep === 'preview' && (
+                 <div className="space-y-6 animate-in">
+                    <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
+                      <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-2">
+                        <Layout size={18} className="text-[#34a4b8]" />
+                        <h4 className="font-russo text-xs uppercase text-slate-800">Visual Theme Select</h4>
+                      </div>
+                      <div className="grid grid-cols-5 gap-2">
+                        {THEMES.map(t => (
+                          <button key={t.id} onClick={() => setProfile({...profile, theme: t.id})} className={`p-3 rounded-xl border-2 flex items-center justify-center transition-all cursor-pointer ${profile.theme === t.id ? 'border-[#34a4b8] bg-white shadow-md' : 'bg-white text-slate-300 border-slate-50 hover:border-slate-100'}`}>
+                            <t.icon size={16} style={{ color: profile.theme === t.id ? t.color : 'inherit' }} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-3">
+                      <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Personal Live URL</h6>
+                      <div className="p-4 bg-slate-50 rounded-xl text-[11px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug || 'username'}</div>
+                      <p className="text-[10px] text-slate-500 italic leading-relaxed">Verification required. We will finalize your QR code and live link after setup data is received at hello@cruisytravel.com.</p>
+                    </div>
+
+                    <button 
+                      onClick={() => setCurrentStep('disclosure')}
+                      className="w-full bg-[#34a4b8] text-white py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl shadow-[#34a4b8]/20 flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer mt-auto"
+                    >
+                        Proceed to Send <ChevronRight size={20} />
+                    </button>
+                 </div>
+               )}
+
                {currentStep === 'disclosure' && (
                  <div className="space-y-6 animate-in">
                    <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] space-y-6 shadow-2xl border border-white/10">
@@ -496,7 +502,7 @@ ${experiencesList || "No experiences selected"}
                  <div className="space-y-6 animate-in">
                     <div className="p-8 bg-blue-50 border border-blue-200 rounded-[2.5rem] shadow-xl text-center space-y-6">
                        <div className="w-16 h-16 bg-[#34a4b8] rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-blue-500/20"><Mail size={40} /></div>
-                       <div className="space-y-2"><h4 className="font-russo text-2xl text-blue-900 uppercase leading-none">The Final Step</h4><p className="text-xs text-blue-700 leading-relaxed max-w-xs mx-auto">To complete your setup, click the button below to open your email client with your pre compiled profile details.</p></div>
+                       <div className="space-y-2"><h4 className="font-russo text-2xl text-blue-900 uppercase leading-none">The Final Step</h4><p className="text-xs text-blue-700 leading-relaxed max-w-xs mx-auto">Click below to open your email client with your pre compiled setup data.</p></div>
                        <div className="space-y-4 pt-4">
                           <button onClick={() => window.location.href = generateMailtoLink()} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#34a4b8]/30 border-none cursor-pointer active:scale-95 transition-all"><Mail size={24} /> Open Email to Send</button>
                           
@@ -506,8 +512,8 @@ ${experiencesList || "No experiences selected"}
                           </div>
                        </div>
                        <div className="p-5 bg-white rounded-2xl text-[10px] text-slate-500 text-left border border-blue-100">
-                          <p className="font-bold text-[#34a4b8] mb-2 uppercase tracking-widest leading-none text-center">Important Notice</p>
-                          <p className="leading-relaxed text-center">We need your setup data at <span className="font-bold">hello@cruisytravel.com</span> to build your custom QR code. Your profile will go live within 72 hours of verification.</p>
+                          <p className="font-bold text-[#34a4b8] mb-2 uppercase tracking-widest leading-none text-center">Setup Instructions</p>
+                          <p className="leading-relaxed text-center">We need your setup data at <span className="font-bold">hello@cruisytravel.com</span> to build your custom page. Your profile will go live within 72 hours of verification.</p>
                        </div>
                     </div>
                     <button onClick={() => { setCurrentStep('preview'); setDisclosureAgreed(false); }} className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-[#34a4b8] transition-colors bg-transparent border-none cursor-pointer">Return to Portal</button>
