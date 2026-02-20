@@ -522,6 +522,16 @@ ${experiencesList}
                       </div>
                     </div>
 
+                    <div className="p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-4">
+                       <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Content Check</h6>
+                       <button 
+                         onClick={() => setActiveModal('itinerary')}
+                         className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-100 text-slate-600 rounded-2xl font-russo text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all border-none cursor-pointer"
+                       >
+                         <Plus size={14} className="text-[#34a4b8]" /> Add More Curated Experiences
+                       </button>
+                    </div>
+
                     {!canFinalize && (
                       <div className="p-6 bg-red-50 border border-red-100 rounded-[2.5rem] flex gap-4 shadow-sm items-start">
                          <div className="p-2 bg-red-400 rounded-full text-white flex-shrink-0"><AlertCircle size={20} /></div>
