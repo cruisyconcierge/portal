@@ -9,7 +9,8 @@ import {
 
 /**
  * CRUISY AMBASSADOR PROGRAM - portal.cruisytravel.com
- * Simplified Workflow: All-in-one setup followed by Copy and Send
+ * Theme: Island Lounge / Professional Coastal
+ * Workflow: Professional mailto with Copy fallback
  * Branding: Russo One / Pacifico / Teal #34a4b8
  * Constraints: No I references. No em dashes.
  */
@@ -139,6 +140,57 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
+  // --- EMAIL COMPILATION ---
+  const generateMailtoLink = () => {
+    const experiencesList = selectedIds.map(id => {
+      const it = itineraries.find(i => i.id === id);
+      return `- ${it ? it.name : id}`;
+    }).join('%0D%0A');
+
+    const subject = encodeURIComponent(`Ambassador Profile Setup: ${profile.fullName}`);
+    const body = encodeURIComponent(`Hello Cruisy Team,%0D%0A%0D%0AWe have finished our curation. Please set up our profile with the following details:%0D%0A%0D%0AAdvisor Name: ${profile.fullName}%0D%0AAdvisor Email: ${profile.email}%0D%0AUsername/URL: cruisytravel.com/${profile.slug}%0D%0ABase Port: ${profile.destination}%0D%0ATheme: ${profile.theme}%0D%0A%0D%0ABio Hook:%0D%0A${profile.bio}%0D%0A%0D%0ASelected Experiences:%0D%0A${experiencesList}%0D%0A%0D%0AThank you!`);
+    
+    return `mailto:hello@cruisytravel.com?subject=${subject}&body=${body}`;
+  };
+
+  const generateProfileTextBlock = () => {
+    const experiencesList = selectedIds.map(id => {
+      const it = itineraries.find(i => i.id === id);
+      return `- ${it ? it.name : id}`;
+    }).join('\n');
+
+    return `CRUISY AMBASSADOR PROGRAM SUBMISSION
+--------------------------------------
+Advisor Name: ${profile.fullName}
+Advisor Email: ${profile.email}
+Target URL: cruisytravel.com/${profile.slug}
+Base Port: ${profile.destination}
+Theme Choice: ${profile.theme}
+
+BIO HOOK:
+${profile.bio || "None provided"}
+
+SELECTED EXPERIENCES:
+${experiencesList || "No experiences selected"}
+--------------------------------------`;
+  };
+
+  const handleCopyToClipboard = () => {
+    const text = generateProfileTextBlock();
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopyStatus(true);
+      setTimeout(() => setCopyStatus(false), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+    document.body.removeChild(textArea);
+  };
+
   // --- ACTIONS ---
   const handleAuth = (e) => {
     e.preventDefault();
@@ -165,46 +217,6 @@ export default function App() {
 
   const toggleExperience = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
-  // --- DATA PREPARATION FOR COPY ---
-  const generateProfileTextBlock = () => {
-    const experiencesList = selectedIds.map(id => {
-      const it = itineraries.find(i => i.id === id);
-      return `- ${it ? it.name : id}`;
-    }).join('\n');
-
-    return `CRUISY AMBASSADOR PROGRAM SUBMISSION
---------------------------------------
-Travel Advisor Status: Cruisy Ambassador
-Travel Advisor Name: ${profile.fullName || "Required Field Missing"}
-Travel Advisor Email: ${profile.email || "Required Field Missing"}
-Personal URL: cruisytravel.com/${profile.slug || "Required Field Missing"}
-Base Port: ${profile.destination}
-Selected Theme: ${profile.theme}
-
-ADVISOR BIO:
-${profile.bio || "No bio provided"}
-
-SELECTED EXPERIENCES:
-${experiencesList || "No experiences selected"}
---------------------------------------`;
-  };
-
-  const handleCopyToClipboard = () => {
-    const text = generateProfileTextBlock();
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      setCopyStatus(true);
-      setTimeout(() => setCopyStatus(false), 2000);
-    } catch (err) {
-      console.error('Copy failed', err);
-    }
-    document.body.removeChild(textArea);
   };
 
   const activeTheme = THEMES.find(t => t.id === profile.theme) || THEMES[0];
@@ -274,130 +286,141 @@ ${experiencesList || "No experiences selected"}
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto p-6 md:p-10 pb-40 space-y-12">
-        
-        {/* SECTION 1: IDENTITY & URL */}
-        <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-white shadow-xl space-y-8 animate-in">
-           <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
-              <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Fingerprint size={28} /></div>
-              <div>
-                <h2 className="font-russo text-2xl uppercase text-slate-800">1. Profile Identity</h2>
-                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Define your professional presence</p>
-              </div>
-           </div>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Display Name</label>
-                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" placeholder="e.g. Jane Doe" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Ambassador Username (URL Slug)</label>
-                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" placeholder="e.g. janetravels" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                <p className="text-[10px] text-[#34a4b8] font-bold mt-2 px-1 italic leading-relaxed">
-                   Your username will define your personal web address: <span className="underline">cruisytravel.com/{profile.slug || 'username'}</span>
+      <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10 pb-32">
+        {/* HERO HEADER */}
+        <section className="bg-white rounded-[3.5rem] p-10 md:p-14 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
+            <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none" style={{ color: activeTheme.color }}><Ship size={400} /></div>
+            <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
+                <div className="inline-block px-4 py-1.5 bg-[#34a4b8]/10 rounded-full mb-2">
+                    <span className="font-pacifico text-[#34a4b8] text-xl">Cruisy Ambassador</span>
+                </div>
+                <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span style={{ color: activeTheme.color }}>Control</span></h2>
+                <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
+                  Design your personal experience page. Verification and publication at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
                 </p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personal Email</label>
-                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="Required for contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Primary Base Port</label>
-                <select className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" value={profile.destination} onChange={e => setProfile({...profile, destination: e.target.value})}>
-                  {DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bio Hook (Short Introduction)</label>
-                <textarea rows="3" className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium shadow-sm focus:border-[#34a4b8]" placeholder="Tell guests why they should book with you..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
-              </div>
-           </div>
-        </section>
-
-        {/* SECTION 2: THEME */}
-        <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-white shadow-xl space-y-8 animate-in">
-           <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
-              <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Layout size={28} /></div>
-              <div>
-                <h2 className="font-russo text-2xl uppercase text-slate-800">2. Profile Theme</h2>
-                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Select your visual branding</p>
-              </div>
-           </div>
-           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {THEMES.map(t => (
-                <button key={t.id} onClick={() => setProfile({...profile, theme: t.id})} className={`p-5 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all cursor-pointer ${profile.theme === t.id ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}>
-                  <t.icon size={24} style={{ color: profile.theme === t.id ? t.color : 'inherit' }} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{t.label}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
+                <button onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} className="p-8 bg-slate-900 rounded-[2.5rem] flex flex-col items-center gap-3 hover:brightness-110 transition-all group hover:shadow-lg cursor-pointer border-none text-white">
+                    <Eye className="text-[#34a4b8] group-hover:scale-110 transition-transform" size={32} />
+                    <span className="font-russo text-xs uppercase">Preview Card</span>
                 </button>
-              ))}
-           </div>
+                <button onClick={() => setActiveModal('resources')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
+                    <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
+                    <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
+                </button>
+            </div>
         </section>
 
-        {/* SECTION 3: EXPERIENCES */}
-        <section className="bg-white rounded-[3rem] p-8 md:p-12 border border-white shadow-xl space-y-8 animate-in">
-           <div className="flex items-center justify-between border-b border-slate-50 pb-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Palmtree size={28} /></div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT COLUMN: IDENTITY & THEME */}
+          <div className="lg:col-span-5 space-y-8">
+            <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-8 animate-in">
+              <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
+                <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Fingerprint size={24} /></div>
                 <div>
-                  <h2 className="font-russo text-2xl uppercase text-slate-800">3. Curate Experiences</h2>
-                  <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Selected: {selectedIds.length}</p>
+                  <h3 className="font-russo text-lg uppercase text-slate-800">Identity Details</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Cruisytravel.com/{profile.slug || 'username'}</p>
                 </div>
               </div>
-              <button onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} className="hidden sm:flex items-center gap-2 bg-[#34a4b8] text-white px-6 py-3 rounded-xl font-russo text-xs shadow-lg hover:scale-105 transition-all border-none cursor-pointer"><Eye size={16} /> Preview Page</button>
-           </div>
-           
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {itineraries.length > 0 ? itineraries
-                .filter(exp => {
-                  const port = profile.destination.toLowerCase();
-                  return String(exp.destinationTag || '').toLowerCase().includes(port) || 
-                         String(exp.name || '').toLowerCase().includes(port);
-                })
-                .map((itinerary) => (
-                <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-4 rounded-[2rem] border-2 flex items-center gap-5 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-sm' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
-                    <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden relative border border-slate-200 flex-shrink-0 shadow-inner">
-                    {itinerary.img ? <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} /> : <div className="w-full h-full flex items-center justify-center text-slate-300">🚢</div>}
-                    {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={24} /></div>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                    <span className="text-[8px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
-                    <h4 className="font-bold text-xs truncate text-slate-800">{itinerary.name}</h4>
-                    <p className="text-[#34a4b8] font-bold text-xs mt-1">{itinerary.price}</p>
-                    </div>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Display Name</label>
+                  <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
                 </div>
-              )) : (
-                <div className="md:col-span-2 py-10 text-center text-slate-400 italic">Connecting to Cruisy database...</div>
-              )}
-           </div>
-        </section>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Ambassador Username</label>
+                  <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+                  <p className="text-[9px] text-[#34a4b8] font-bold mt-1 px-1">Your personal URL link</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Personal Email</label>
+                  <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Home Port</label>
+                  <select className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.destination} onChange={e => setProfile({...profile, destination: e.target.value})}>
+                    {DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Short Bio Hook</label>
+                  <textarea rows="3" className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium focus:border-[#34a4b8]" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+                </div>
+              </div>
+            </section>
 
-        {/* RESOURCE PROMPT */}
-        <section onClick={() => setActiveModal('resources')} className="p-8 bg-slate-900 rounded-[3rem] border border-white flex flex-col md:flex-row items-center justify-between gap-8 cursor-pointer hover:brightness-110 transition-all shadow-xl">
-           <div className="flex items-center gap-6">
-              <div className="w-16 h-16 bg-[#34a4b8] rounded-2xl flex items-center justify-center text-white shadow-lg"><BookOpen size={32} /></div>
-              <div className="text-center md:text-left">
-                <h4 className="font-russo text-white text-xl uppercase tracking-tight">Ambassador Toolkit</h4>
-                <p className="text-slate-400 text-xs">Success stories, product updates, and growth tips for your travel business.</p>
+            <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-6 animate-in">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Layout size={24} /></div>
+                <h3 className="font-russo text-lg uppercase text-slate-800">Visual Theme</h3>
               </div>
-           </div>
-           <ChevronRight className="text-[#34a4b8]" size={32} />
-        </section>
+              <div className="grid grid-cols-5 gap-2">
+                {THEMES.map(t => (
+                  <button key={t.id} onClick={() => setProfile({...profile, theme: t.id})} className={`p-3 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all cursor-pointer ${profile.theme === t.id ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-sm' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}>
+                    <t.icon size={18} style={{ color: profile.theme === t.id ? t.color : 'inherit' }} />
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* RIGHT COLUMN: EXPERIENCES */}
+          <div className="lg:col-span-7">
+            <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-8 animate-in h-full">
+              <div className="flex items-center justify-between border-b border-slate-50 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Palmtree size={24} /></div>
+                  <div>
+                    <h3 className="font-russo text-lg uppercase text-slate-800">Itinerary Curation</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Docked in {profile.destination}</p>
+                  </div>
+                </div>
+                <span className="px-4 py-1.5 bg-[#34a4b8] text-white rounded-full font-russo text-[10px] uppercase tracking-widest">{selectedIds.length} Selected</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[600px] pr-2 scrollbar-hide">
+                {itineraries.length > 0 ? itineraries
+                  .filter(exp => {
+                    const port = profile.destination.toLowerCase();
+                    return String(exp.destinationTag || '').toLowerCase().includes(port) || String(exp.name || '').toLowerCase().includes(port);
+                  })
+                  .map((itinerary) => (
+                  <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-3 rounded-3xl border-2 flex items-center gap-4 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-sm' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
+                      <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden relative border border-slate-200 flex-shrink-0">
+                      {itinerary.img ? <img src={itinerary.img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300">🚢</div>}
+                      {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={20} /></div>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[7px] font-black uppercase text-[#34a4b8] tracking-widest leading-none">{itinerary.category}</span>
+                        <h4 className="font-bold text-[11px] truncate text-slate-800 leading-tight">{itinerary.name}</h4>
+                        <p className="text-[#34a4b8] font-bold text-[10px]">{itinerary.price}</p>
+                      </div>
+                  </div>
+                )) : (
+                  <div className="md:col-span-2 py-20 text-center text-slate-400 italic">Syncing with WP REST API...</div>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
       </main>
 
-      {/* FIXED BOTTOM ACTION BAR */}
-      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200 z-[90]">
-         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-            <div className="hidden md:block">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Status Check</p>
-              <p className="font-russo text-sm text-slate-800 uppercase leading-none">{profile.fullName || 'New Advisor'} | {selectedIds.length} Selections</p>
+      {/* FIXED FOOTER ACTION BAR */}
+      <footer className="fixed bottom-0 left-0 right-0 p-5 bg-white/90 backdrop-blur-xl border-t border-slate-200 z-[90] shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 px-4 md:px-8">
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-[#34a4b8]/10 flex items-center justify-center text-[#34a4b8]"><ShieldCheck size={20} /></div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Curation Status</p>
+                <p className="font-russo text-xs text-slate-800 uppercase leading-none">{profile.fullName || 'Unidentified Advisor'} | {selectedIds.length} Experiences</p>
+              </div>
             </div>
             <button 
                onClick={() => { setActiveModal('preview'); setCurrentStep('disclosure'); }}
-               disabled={!profile.fullName || !profile.slug}
-               className={`flex-1 md:flex-none px-12 py-5 rounded-2xl font-russo text-lg uppercase tracking-widest transition-all border-none cursor-pointer shadow-xl ${profile.fullName && profile.slug ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+               disabled={!profile.fullName || !profile.slug || !profile.email}
+               className={`flex-1 md:flex-none px-16 py-5 rounded-2xl font-russo text-base uppercase tracking-widest transition-all border-none cursor-pointer shadow-xl ${profile.fullName && profile.slug && profile.email ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/30 hover:scale-[1.02]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
             >
-               Finish and Send Setup Data
+               Finalize and Send to hello@cruisytravel.com
             </button>
          </div>
       </footer>
@@ -408,36 +431,35 @@ ${experiencesList || "No experiences selected"}
           <div className="space-y-6 pb-6 text-center">
             <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4">
               <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Grow Your Travel Business</h4>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Discover our latest success stories and grab expert tips to grow your bookings.</p>
+              <p className="text-sm text-slate-500 max-w-sm mx-auto">Discover success stories and grab expert tips to grow your bookings.</p>
             </div>
             <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
-              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><TrendingUp size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Success Stories</h5><p className="text-[10px] text-slate-400">See how our top partners maximize reach.</p></div></div>
+              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><TrendingUp size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Success Stories</h5><p className="text-[10px] text-slate-400">See how top partners maximize reach.</p></div></div>
               <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><Zap size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Product Updates</h5><p className="text-[10px] text-slate-400">Latest itineraries and vault additions.</p></div></div>
               <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><Lightbulb size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Growth Tips</h5><p className="text-[10px] text-slate-400">Pro strategies for sharing your link.</p></div></div>
             </div>
-            <button onClick={() => window.open('https://cruisytravel.com/advisor-resources', '_blank')} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 cursor-pointer border-none"><ExternalLink size={20} /> Access Full Toolkit</button>
-            <div className="pt-4 border-t border-slate-50"><p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Cruisy Travel Ambassador Hub</p></div>
+            <button onClick={() => window.open('https://cruisytravel.com/advisor-resources', '_blank')} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 cursor-pointer border-none mt-6"><ExternalLink size={20} /> Access Full Toolkit</button>
           </div>
         </Modal>
       )}
 
       {activeModal === 'preview' && (
-        <Modal title="Digital Advisor Preview" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
+        <Modal title="Setup Submission" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-8">
             <div className="flex justify-center">
               <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3rem] p-2 relative border-[8px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
                   <div className={`p-6 text-center ${activeTheme.bg}`}>
-                    <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg" style={{ backgroundColor: activeTheme.color }}><activeTheme.icon size={28} /></div>
+                    <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}><activeTheme.icon size={28} /></div>
                     <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight">@{profile.slug || 'advisor'}</h5>
                     <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Ambassador'}</p>
                     <p className="font-pacifico text-[#34a4b8] text-sm mt-1">Cruisy Ambassador</p>
-                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed">{profile.bio || "No bio provided."}</p>
+                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed">{profile.bio || "No bio hook provided."}</p>
                   </div>
                   <div className="px-5 py-2 border-y border-slate-50 flex items-center justify-between"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Curated Experiences</p><Compass size={10} className="text-slate-300" /></div>
                   <div className="px-5 pb-5 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300">No experiences selected yet.</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300">Choose experiences in the library to populate your buoy.</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
@@ -445,7 +467,6 @@ ${experiencesList || "No experiences selected"}
                         <div key={id} className="p-2 bg-white border border-slate-100 rounded-xl flex items-center gap-2 shadow-sm"><div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">{it.img ? <img src={it.img} className="w-full h-full object-cover" /> : <Ship className="m-auto opacity-20" size={16} />}</div><div className="flex-1 min-w-0 text-left"><span className="text-[8px] font-bold text-slate-700 uppercase truncate block leading-none">{it.name}</span><span className="text-[7px] font-black text-[#34a4b8] uppercase tracking-tighter mt-1 block">{it.price}</span></div><ChevronRight size={10} className="text-slate-300" /></div>
                       );
                     })}
-                    {selectedIds.length > 0 && <div className="text-center"><button className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg" style={{ backgroundColor: activeTheme.color }}><Mail size={12} /> Contact Advisor</button><p className="font-pacifico text-[#34a4b8] text-[10px] mt-2">Cruisy Ambassador</p></div>}
                   </div>
                 </div>
               </div>
@@ -466,7 +487,7 @@ ${experiencesList || "No experiences selected"}
                    </div>
                    <div className="flex gap-4">
                      <button onClick={() => setCurrentStep('preview')} className="flex-1 bg-slate-100 text-slate-500 py-6 rounded-[2.2rem] font-russo uppercase text-xs tracking-widest cursor-pointer border-none">Go Back</button>
-                     <button disabled={!disclosureAgreed} onClick={() => setCurrentStep('final')} className={`flex-[2] py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl transition-all border-none cursor-pointer ${disclosureAgreed ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}>Finish Selection</button>
+                     <button disabled={!disclosureAgreed} onClick={() => setCurrentStep('final')} className={`flex-[2] py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl transition-all border-none cursor-pointer ${disclosureAgreed ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}>Confirm and Send</button>
                    </div>
                  </div>
                )}
@@ -474,19 +495,22 @@ ${experiencesList || "No experiences selected"}
                {currentStep === 'final' && (
                  <div className="space-y-6 animate-in">
                     <div className="p-8 bg-blue-50 border border-blue-200 rounded-[2.5rem] shadow-xl text-center space-y-6">
-                       <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-blue-500/20"><AlertCircle size={40} /></div>
-                       <div className="space-y-2"><h4 className="font-russo text-2xl text-blue-900 uppercase leading-none">Action Required</h4><p className="text-xs text-blue-700 leading-relaxed">To complete your setup, we need you to manually email us your profile details. Follow the two steps below.</p></div>
+                       <div className="w-16 h-16 bg-[#34a4b8] rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-blue-500/20"><Mail size={40} /></div>
+                       <div className="space-y-2"><h4 className="font-russo text-2xl text-blue-900 uppercase leading-none">The Final Step</h4><p className="text-xs text-blue-700 leading-relaxed max-w-xs mx-auto">To complete your setup, click the button below to open your email client with your pre compiled profile details.</p></div>
                        <div className="space-y-4 pt-4">
-                          <div className="text-left"><p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Step 1: Get your data</p><button onClick={handleCopyToClipboard} className={`w-full py-5 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 transition-all border-none cursor-pointer ${copyStatus ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-slate-900/20'}`}>{copyStatus ? <><CircleCheck size={20} /> Copied!</> : <><Clipboard size={20} /> Copy My Profile Info</>}</button></div>
-                          <div className="text-left"><p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Step 2: Send to us</p><button onClick={() => window.location.href = `mailto:hello@cruisytravel.com?subject=New Travel Advisor Sign-Up: ${profile.fullName}`} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#34a4b8]/20 border-none cursor-pointer"><Mail size={20} /> Open Email to Send</button></div>
+                          <button onClick={() => window.location.href = generateMailtoLink()} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#34a4b8]/30 border-none cursor-pointer active:scale-95 transition-all"><Mail size={24} /> Open Email to Send</button>
+                          
+                          <div className="pt-4 border-t border-blue-100">
+                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-3">Fallback Option (If email is blank)</p>
+                            <button onClick={handleCopyToClipboard} className={`w-full py-4 rounded-xl font-russo uppercase text-[11px] tracking-widest flex items-center justify-center gap-3 transition-all border-none cursor-pointer ${copyStatus ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white opacity-80 hover:opacity-100'}`}>{copyStatus ? <><CircleCheck size={16} /> Copied!</> : <><Clipboard size={16} /> Copy and Paste Manually</>}</button>
+                          </div>
                        </div>
                        <div className="p-5 bg-white rounded-2xl text-[10px] text-slate-500 text-left border border-blue-100">
                           <p className="font-bold text-[#34a4b8] mb-2 uppercase tracking-widest leading-none text-center">Important Notice</p>
-                          <p className="leading-relaxed mb-3 text-center">Click the button above to copy your info, then click the open email button and <span className="font-bold text-blue-900 uppercase underline">paste your info</span> into the body of the email to send it to us at <span className="font-bold">hello@cruisytravel.com</span>.</p>
-                          <p className="italic opacity-70 text-center">Your profile will go live within 72 hours of verification.</p>
+                          <p className="leading-relaxed text-center">We need your setup data at <span className="font-bold">hello@cruisytravel.com</span> to build your custom QR code. Your profile will go live within 72 hours of verification.</p>
                        </div>
                     </div>
-                    <button onClick={() => { setCurrentStep('preview'); setDisclosureAgreed(false); }} className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-[#34a4b8] transition-colors bg-transparent border-none cursor-pointer">Edit Profile Before Sending</button>
+                    <button onClick={() => { setCurrentStep('preview'); setDisclosureAgreed(false); }} className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-[#34a4b8] transition-colors bg-transparent border-none cursor-pointer">Return to Portal</button>
                  </div>
                )}
             </div>
