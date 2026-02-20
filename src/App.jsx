@@ -168,12 +168,13 @@ export default function App() {
       return it ? it.name : id;
     }).join(', ');
 
-    // EXACT MAPPING TO TEMPLATE VARIABLES
+    // EXACT MAPPING TO YOUR TEMPLATE VARIABLES
     const templateParams = {
       user_name: profile.fullName,
       user_email: profile.email,
       user_bio: profile.bio || "No bio provided",
-      experiences_list: selectedNames || "No experiences selected"
+      experiences_list: selectedNames || "No experiences selected",
+      advisor_slug: profile.slug
     };
 
     try {
@@ -487,6 +488,7 @@ export default function App() {
             <div className="flex justify-center">
               <div className="w-[260px] h-[540px] bg-slate-900 rounded-[3rem] p-2 relative border-[6px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
+                  {/* THEME STRIPE */}
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
                   <div className={`p-5 text-center ${activeTheme.bg}`}>
                     <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}>
@@ -504,7 +506,7 @@ export default function App() {
                   </div>
 
                   <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your profile...</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your buoy...</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
