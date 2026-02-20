@@ -3,14 +3,16 @@ import {
   Palmtree, User, MapPin, Eye, Share2, Plus, Minus,
   ExternalLink, ChevronRight, Clipboard, Send, Loader2, CircleAlert,
   LogOut, CircleCheck, Navigation, Ship, Anchor, Waves, Info, X, Settings, 
-  Sun, Umbrella, Sunset, Compass, Sparkles, Mail, BookOpen, Lightbulb, TrendingUp, Zap
+  Sun, Umbrella, Sunset, Compass, Sparkles, Mail, BookOpen, Lightbulb, TrendingUp, Zap, ShieldCheck
 } from 'lucide-react';
 
 /**
- * ADVISOR PORTAL - portal.cruisytravel.com
+ * CRUISY AMBASSADOR PROGRAM - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
- * Workflow: Manual Review via Pre-formatted Email
+ * Workflow: Automated Submission via EmailJS
  * Branding: Russo One / Pacifico / Teal #34a4b8
+ * Terminologies: 'Cruisy Ambassador Program', 'Travel Advisor', 'we', 'us'
+ * Constraints: No em dashes.
  */
 
 const DESTINATIONS = [
@@ -54,7 +56,9 @@ export default function App() {
   const [itineraries, setItineraries] = useState([]);
   const [copyStatus, setCopyStatus] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showDisclosure, setShowDisclosure] = useState(false);
   const [error, setError] = useState(null);
+  const [emailJSLoaded, setEmailJSLoaded] = useState(false);
 
   // --- PROFILE STATE ---
   const [profile, setProfile] = useState(() => {
@@ -73,7 +77,7 @@ export default function App() {
       fullName: '', 
       slug: '', 
       email: '', 
-      bio: 'Certified Travel Advisor with Cruisy Travel.', 
+      bio: '', 
       destination: 'Key West', 
       password: '',
       theme: 'tropical'
@@ -102,6 +106,18 @@ export default function App() {
       localStorage.setItem('cruisy_current_session_slug', profile.slug);
     }
   }, [profile, selectedIds, isLoggedIn]);
+
+  // --- EMAILJS SCRIPT INJECTION (FIX FOR IMPORT ERROR) ---
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    script.async = true;
+    script.onload = () => {
+      window.emailjs.init("CEmX_DkN73HnHsFua");
+      setEmailJSLoaded(true);
+    };
+    document.head.appendChild(script);
+  }, []);
 
   // --- DATA FETCHING ---
   const fetchItineraries = async () => {
@@ -140,53 +156,45 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  // --- EMAIL GENERATION LOGIC ---
-  const generatePublishEmail = () => {
-    const adminEmail = "hello@cruisytravel.com"; 
-    const activeThemeLabel = THEMES.find(t => t.id === profile.theme)?.label || 'Tropical';
+  // --- SUBMISSION LOGIC ---
+  const sendAmbassadorData = async () => {
+    if (!emailJSLoaded) {
+      alert("Submission system is still loading. Please wait a second.");
+      return;
+    }
     
-    const selectedList = selectedIds.map(id => {
+    setLoading(true);
+    
+    const selectedNames = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
-      return `- ${it ? it.name : id} (ID: ${id})`;
-    }).join('\n');
+      return it ? it.name : id;
+    }).join(', ');
 
-    const subject = `Ambassador Profile Submission: ${profile.fullName} (@${profile.slug})`;
-    const body = `Hello Cruisy Team,
+    const templateParams = {
+      user_name: profile.fullName,
+      user_email: profile.email,
+      user_bio: profile.bio || "No bio provided.",
+      experiences_list: selectedNames
+    };
 
-I've completed the curation of my Ambassador profile and would like to submit it for review and publication. Please find my account details and selected experiences below:
-
-PROFILE INFORMATION:
-- Status: Cruisy Ambassador
-- Display Name: ${profile.fullName}
-- Username/URL Slug: ${profile.slug}
-- Primary Contact Email: ${profile.email}
-- Primary Destination: ${profile.destination}
-- Selected Profile Theme: ${activeThemeLabel}
-
-BIO / HOOK:
-"${profile.bio || "No bio provided"}"
-
-CURATED EXPERIENCES:
-${selectedList || "No experiences selected yet."}
-
-I understand that the standard setup time is approximately 72 hours and look forward to receiving the confirmation email once my page is live.
-
-Thank you,
-${profile.fullName}`;
-
-    return `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      await window.emailjs.send(
+        "service_t5k7p58",
+        "template_actak9i",
+        templateParams
+      );
+      
+      setLoading(false);
+      setIsSubmitted(true);
+      setShowDisclosure(false);
+    } catch (err) {
+      console.error("Submission failed", err);
+      setLoading(false);
+      alert("We encountered an error during submission. Please check your internet connection or try again later.");
+    }
   };
 
   // --- ACTIONS ---
-  const handleSubmission = () => {
-    setLoading(true);
-    setTimeout(() => {
-      window.location.href = generatePublishEmail();
-      setLoading(false);
-      setIsSubmitted(true);
-    }, 1200);
-  };
-
   const handleAuth = (e) => {
     e.preventDefault();
     if (authMode === 'signup') {
@@ -206,14 +214,14 @@ ${profile.fullName}`;
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('cruisy_current_session_slug');
-    setProfile({ fullName: '', slug: '', email: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
+    setProfile({ fullName: '', slug: '', email: '', bio: '', destination: 'Key West', password: '', theme: 'tropical' });
     setSelectedIds([]);
   };
 
   const switchAuthMode = (mode) => {
     setAuthMode(mode);
     if (mode === 'signup') {
-      setProfile({ fullName: '', slug: '', email: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
+      setProfile({ fullName: '', slug: '', email: '', bio: '', destination: 'Key West', password: '', theme: 'tropical' });
       setSelectedIds([]);
     }
   };
@@ -239,7 +247,7 @@ ${profile.fullName}`;
                 </h1>
               </div>
               <p className="font-pacifico text-2xl text-[#34a4b8] -mt-1 mb-2">Cruisy Ambassador</p>
-              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase font-bold">Advisor Portal</p>
+              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase font-bold">Travel Advisor Portal</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="flex bg-slate-900/10 p-1 rounded-2xl">
@@ -256,7 +264,7 @@ ${profile.fullName}`;
                 )}
                 <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
                 <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 shadow-sm" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
-                <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
+                <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer">
                    {authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK'}
                    <Ship size={20} />
                 </button>
@@ -282,7 +290,7 @@ ${profile.fullName}`;
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Advisor</span>
+            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Travel Advisor</span>
             <span className="font-russo text-[#34a4b8] text-xl font-bold leading-none mt-1 uppercase tracking-tight">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200 cursor-pointer border-none"><LogOut size={20} /></button>
@@ -298,7 +306,7 @@ ${profile.fullName}`;
                 </div>
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span style={{ color: activeTheme.color }}>Control</span></h2>
                 <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
-                  Design your custom experience page. We manually review and publish your profile at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
+                  Design your custom experience page within the Cruisy Ambassador Program. We manually review and publish your profile at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
@@ -314,7 +322,7 @@ ${profile.fullName}`;
                     <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
                 </button>
-                <button onClick={() => setActiveModal('preview')} className="p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
+                <button onClick={() => setActiveModal('preview')} className="sm:col-span-2 p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
                     <Eye size={32} className="group-hover:scale-110 transition-transform" />
                     <div className="flex flex-col items-start text-left">
                          <span className="font-russo text-xl uppercase tracking-tight leading-none">Live View</span>
@@ -331,7 +339,7 @@ ${profile.fullName}`;
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><CircleCheck size={28} /></div>
-                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Selected</p><p className="font-russo text-lg uppercase">{selectedIds.length} Itineraries</p></div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Selected</p><p className="font-russo text-lg uppercase">{selectedIds.length} Experiences</p></div>
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><Compass size={28} /></div>
@@ -426,9 +434,9 @@ ${profile.fullName}`;
         <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
           <div className="space-y-6 pb-6 text-center">
             <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4">
-              <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Grow Your Travel Business</h4>
+              <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Build Your Travel Network</h4>
               <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
-                Access success stories, product updates, and expert tips to maximize your Ambassador influence.
+                Discover our latest success stories, check for new itinerary updates, and grab expert tips to grow your bookings.
               </p>
             </div>
 
@@ -437,7 +445,7 @@ ${profile.fullName}`;
                 <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><TrendingUp size={20} /></div>
                 <div>
                   <h5 className="font-russo text-xs uppercase text-slate-800">Success Stories</h5>
-                  <p className="text-[10px] text-slate-400">See how top Ambassadors are booking more.</p>
+                  <p className="text-[10px] text-slate-400">See how our top partners maximize their reach.</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
@@ -450,8 +458,8 @@ ${profile.fullName}`;
               <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
                 <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><Lightbulb size={20} /></div>
                 <div>
-                  <h5 className="font-russo text-xs uppercase text-slate-800">Expert Tips</h5>
-                  <p className="text-[10px] text-slate-400">Pro strategies for link sharing.</p>
+                  <h5 className="font-russo text-xs uppercase text-slate-800">Growth Tips</h5>
+                  <p className="text-[10px] text-slate-400">Pro strategies for sharing your profile.</p>
                 </div>
               </div>
             </div>
@@ -461,7 +469,7 @@ ${profile.fullName}`;
                 onClick={() => window.open('https://cruisytravel.com/advisor-resources', '_blank')}
                 className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 cursor-pointer border-none"
               >
-                <ExternalLink size={20} /> View All Resources
+                <ExternalLink size={20} /> Access Full Toolkit
               </button>
             </div>
 
@@ -473,7 +481,7 @@ ${profile.fullName}`;
       )}
 
       {activeModal === 'preview' && (
-        <Modal title="Live Preview" onClose={() => { setActiveModal(null); setIsSubmitted(false); }}>
+        <Modal title="Live Preview" onClose={() => { setActiveModal(null); setIsSubmitted(false); setShowDisclosure(false); }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
             <div className="flex justify-center">
               <div className="w-[260px] h-[540px] bg-slate-900 rounded-[3rem] p-2 relative border-[6px] border-slate-800 shadow-xl shadow-black/40">
@@ -487,7 +495,7 @@ ${profile.fullName}`;
                     <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight tracking-tight">@{profile.slug}</h5>
                     <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Ambassador'}</p>
                     <p className="font-pacifico text-[#34a4b8] text-sm mt-1">Cruisy Ambassador</p>
-                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed font-medium">{profile.bio}</p>
+                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed font-medium">{profile.bio || "No bio hook provided."}</p>
                   </div>
 
                   <div className="px-4 py-2 border-y border-slate-50 flex items-center justify-between">
@@ -496,7 +504,7 @@ ${profile.fullName}`;
                   </div>
 
                   <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your buoy...</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your buoy...</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
@@ -527,7 +535,7 @@ ${profile.fullName}`;
                           className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" 
                           style={{ backgroundColor: activeTheme.color }}
                         >
-                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Ambassador'}
+                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Advisor'}
                         </button>
                         <p className="font-pacifico text-[#34a4b8] text-xs mt-2">Cruisy Ambassador</p>
                       </div>
@@ -540,43 +548,84 @@ ${profile.fullName}`;
             <div className="space-y-5 pb-10 text-left">
                {!isSubmitted ? (
                  <>
-                   <div className="p-6 bg-slate-50 rounded-[2.5rem] space-y-4 border border-slate-100 shadow-sm">
-                     <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Live Page URL</h6>
-                     <div className="p-3 bg-white rounded-xl flex items-center gap-2 border border-slate-200 shadow-inner overflow-hidden">
-                       <div className="flex-1 text-[10px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
-                       <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-lg transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
-                         {copyStatus ? <CircleCheck size={14} /> : <Clipboard size={14} />}
+                   {!showDisclosure ? (
+                     <>
+                       <div className="p-6 bg-slate-50 rounded-[2.5rem] space-y-4 border border-slate-100 shadow-sm">
+                         <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Live Page URL</h6>
+                         <div className="p-3 bg-white rounded-xl flex items-center gap-2 border border-slate-200 shadow-inner overflow-hidden">
+                           <div className="flex-1 text-[10px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
+                           <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-lg transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
+                             {copyStatus ? <CircleCheck size={14} /> : <Clipboard size={14} />}
+                           </button>
+                         </div>
+                       </div>
+
+                       <div className="p-6 bg-blue-50 rounded-[2.5rem] border border-blue-100 flex gap-4 shadow-sm">
+                          <div className="p-2 bg-blue-400 rounded-full h-fit text-white flex-shrink-0"><Zap size={16} /></div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-blue-900 leading-none">Ready to Deploy?</p>
+                            <p className="text-[10px] text-blue-800 leading-relaxed">Publishing will submit your curated profile to our automation desk for live deployment.</p>
+                          </div>
+                       </div>
+
+                       <button 
+                         onClick={() => setShowDisclosure(true)} 
+                         className="w-full bg-[#34a4b8] text-white py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer"
+                       >
+                          Proceed to Submit
                        </button>
-                     </div>
-                     <div className="p-4 bg-white/50 rounded-xl space-y-2 border border-dashed border-slate-200">
-                       <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                         Your page logic is active. Every link on your profile automatically includes your unique tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
-                       </p>
-                     </div>
-                   </div>
+                     </>
+                   ) : (
+                     <div className="animate-in slide-in-from-right-4 duration-300">
+                        <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] space-y-6 shadow-2xl border border-white/10">
+                          <div className="flex items-center gap-3 mb-2">
+                             <ShieldCheck className="text-[#34a4b8]" size={28} />
+                             <h4 className="font-russo text-lg uppercase leading-none">Program Disclosure</h4>
+                          </div>
+                          
+                          <div className="space-y-4 text-xs leading-relaxed text-slate-300">
+                             <p>We are a technology partner and sub affiliate platform, not an employer.</p>
+                             <p>We charge zero advisor fees (unlike most other programs).</p>
+                             <p>We handle guest inquiries and follow up on weather cancellations for you.</p>
+                             <p>The 10 to 12 percent commission covers the cost of the free website, your custom QR code, and our administrative support.</p>
+                          </div>
 
-                   <div className="p-6 bg-amber-50 rounded-[2.5rem] border border-amber-100 flex gap-4 shadow-sm">
-                      <div className="p-2 bg-amber-400 rounded-full h-fit text-white flex-shrink-0"><Info size={16} /></div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-amber-900 leading-none">Publishing Notice</p>
-                        <p className="text-[10px] text-amber-800 leading-relaxed">Submitting will open your email to send your curation to Cruisy Admin. Setup time is <span className="font-bold">72 hours</span>.</p>
-                      </div>
-                   </div>
-
-                   <button onClick={handleSubmission} disabled={loading} className="w-full bg-[#34a4b8] text-white py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer">
-                      {loading ? <Loader2 className="animate-spin" size={24} /> : <><Mail size={20} /> Publish to Network</>}
-                   </button>
+                          <div className="pt-4 flex flex-col gap-3">
+                             <button 
+                               onClick={sendAmbassadorData} 
+                               disabled={loading}
+                               className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 border-none cursor-pointer"
+                             >
+                                {loading ? <Loader2 className="animate-spin" size={20} /> : "Agree & Submit"}
+                             </button>
+                             <button 
+                               onClick={() => setShowDisclosure(false)}
+                               className="text-slate-500 font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors bg-transparent border-none cursor-pointer"
+                             >
+                                Go Back
+                             </button>
+                          </div>
+                        </div>
+                     </div>
+                   )}
                  </>
                ) : (
                  <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 text-center space-y-6 animate-in zoom-in-95 duration-300 shadow-xl">
                     <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-emerald-500/20">
                        <CircleCheck size={40} />
                     </div>
-                    <div className="space-y-2">
-                       <h4 className="font-russo text-xl text-emerald-900 uppercase leading-none">Request Sent!</h4>
-                       <p className="text-xs text-emerald-700 leading-relaxed font-medium">Please verify your email client sent the message. We will manually build your page within 72 hours.</p>
+                    <div className="space-y-3">
+                       <h4 className="font-russo text-xl text-emerald-900 uppercase leading-none">Success</h4>
+                       <p className="text-xs text-emerald-700 leading-relaxed font-medium">
+                          Thank you! We have received your profile information. We are now working on your custom page and QR code. we will reach out within 72 hours with your live link. If you have any trouble, please send us a DM.
+                       </p>
                     </div>
-                    <button onClick={() => setActiveModal(null)} className="text-emerald-500 font-bold text-[10px] uppercase tracking-[0.2em] hover:underline bg-transparent border-none cursor-pointer">Return to Dashboard</button>
+                    <button 
+                      onClick={() => { setActiveModal(null); setIsSubmitted(false); }} 
+                      className="text-emerald-500 font-bold text-[10px] uppercase tracking-[0.2em] hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      Return to Control Panel
+                    </button>
                  </div>
                )}
             </div>
