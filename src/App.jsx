@@ -10,7 +10,7 @@ import {
 /**
  * CRUISY AMBASSADOR PROGRAM - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
- * Workflow: Professional mailto with Copy fallback
+ * Workflow: Popup-based Hub with Mailto/Copy fallback
  * Branding: Russo One / Pacifico / Teal #34a4b8
  * Constraints: No I references. No em dashes.
  */
@@ -140,6 +140,11 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
+  // --- VALIDATION ---
+  const isProfileComplete = profile.fullName && profile.slug && profile.email && profile.bio;
+  const hasExperiences = selectedIds.length > 0;
+  const canFinalize = isProfileComplete && hasExperiences;
+
   // --- EMAIL COMPILATION ---
   const generateMailtoLink = () => {
     const experiencesList = selectedIds.map(id => {
@@ -168,10 +173,10 @@ Base Port: ${profile.destination}
 Theme Choice: ${profile.theme}
 
 BIO HOOK:
-${profile.bio || "None provided"}
+${profile.bio}
 
 CURATED EXPERIENCES:
-${experiencesList || "No experiences selected"}
+${experiencesList}
 --------------------------------------`;
   };
 
@@ -287,7 +292,6 @@ ${experiencesList || "No experiences selected"}
       </nav>
 
       <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-10 pb-20">
-        {/* HERO HEADER */}
         <section className="bg-white rounded-[3.5rem] p-10 md:p-14 border border-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
             <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none" style={{ color: activeTheme.color }}><Ship size={400} /></div>
             <div className="space-y-6 relative z-10 max-w-xl text-center md:text-left">
@@ -296,111 +300,128 @@ ${experiencesList || "No experiences selected"}
                 </div>
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span style={{ color: activeTheme.color }}>Control</span></h2>
                 <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
-                  Design your personal experience page. Verification and publication at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
+                  Welcome to the Ambassador control panel. Complete your identity and curation to publish your live link at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
-                <button onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} className="p-8 bg-slate-900 rounded-[2.5rem] flex flex-col items-center gap-3 hover:brightness-110 transition-all group hover:shadow-lg cursor-pointer border-none text-white">
-                    <Eye className="text-[#34a4b8] group-hover:scale-110 transition-transform" size={32} />
-                    <span className="font-russo text-xs uppercase">Preview Card</span>
+                <button onClick={() => setActiveModal('profile')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
+                    <Fingerprint style={{ color: activeTheme.color }} className="group-hover:rotate-12 transition-transform" size={32} />
+                    <span className="font-russo text-xs text-slate-800 uppercase">Profile Identity</span>
+                </button>
+                <button onClick={() => setActiveModal('itinerary')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
+                    <Palmtree style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
+                    <span className="font-russo text-xs text-slate-800 uppercase">Curated Experiences</span>
                 </button>
                 <button onClick={() => setActiveModal('resources')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
                     <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
                 </button>
+                <button 
+                  onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} 
+                  className={`p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white ${canFinalize ? 'opacity-100' : 'opacity-70'}`}
+                  style={{ backgroundColor: activeTheme.color }}
+                >
+                    <Eye size={32} className="group-hover:scale-110 transition-transform" />
+                    <div className="flex flex-col items-start text-left">
+                         <span className="font-russo text-xl uppercase tracking-tight leading-none">Live View</span>
+                         <span className="text-[10px] text-white/60 font-black uppercase tracking-widest mt-1">Finalize & Send</span>
+                    </div>
+                </button>
             </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN: IDENTITY */}
-          <div className="lg:col-span-5 space-y-8">
-            <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-8 animate-in">
-              <div className="flex items-center gap-4 border-b border-slate-50 pb-6">
-                <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Fingerprint size={24} /></div>
-                <div>
-                  <h3 className="font-russo text-lg uppercase text-slate-800">Identity Details</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Cruisytravel.com/{profile.slug || 'username'}</p>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className={`bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border flex items-center gap-6 shadow-sm transition-colors ${profile.fullName && profile.slug ? 'border-emerald-200' : 'border-white'}`}>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}>
+                  {profile.fullName && profile.slug ? <CircleCheck size={28} className="text-emerald-500" /> : <User size={28} />}
                 </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Display Name</label>
-                  <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Identity Status</p><p className="font-russo text-lg uppercase">{profile.fullName ? 'Complete' : 'Pending'}</p></div>
+            </div>
+            <div className={`bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border flex items-center gap-6 shadow-sm transition-colors ${selectedIds.length > 0 ? 'border-emerald-200' : 'border-white'}`}>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}>
+                  {selectedIds.length > 0 ? <CircleCheck size={28} className="text-emerald-500" /> : <Sparkles size={28} />}
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Ambassador Username</label>
-                  <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                  <p className="text-[9px] text-[#34a4b8] font-bold mt-1 px-1">Defines your personal link: cruisytravel.com/{profile.slug || 'username'}</p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Personal Email</label>
-                  <input className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Home Port</label>
-                  <select className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 focus:border-[#34a4b8]" value={profile.destination} onChange={e => setProfile({...profile, destination: e.target.value})}>
-                    {DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest ml-1">Short Bio Hook</label>
-                  <textarea rows="3" className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium focus:border-[#34a4b8]" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
-                </div>
-              </div>
-            </section>
-
-            {/* SEND BUTTON REPLACING STATUS FOOTER */}
-            <button 
-               onClick={() => { setActiveModal('preview'); setCurrentStep('disclosure'); }}
-               disabled={!profile.fullName || !profile.slug || !profile.email}
-               className={`w-full py-6 rounded-3xl font-russo text-lg uppercase tracking-widest transition-all border-none cursor-pointer shadow-2xl ${profile.fullName && profile.slug && profile.email ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/30 hover:scale-[1.02]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
-            >
-               Finish & Send to Setup Team
-            </button>
-          </div>
-
-          {/* RIGHT COLUMN: EXPERIENCES */}
-          <div className="lg:col-span-7">
-            <section className="bg-white rounded-[2.5rem] p-8 border border-white shadow-lg space-y-8 animate-in h-full">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#34a4b8]/10 text-[#34a4b8] rounded-2xl"><Palmtree size={24} /></div>
-                  <div>
-                    <h3 className="font-russo text-lg uppercase text-slate-800">Curated Experiences</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Selected in {profile.destination}: {selectedIds.length}</p>
-                  </div>
-                </div>
-                <span className="px-4 py-1.5 bg-[#34a4b8] text-white rounded-full font-russo text-[10px] uppercase tracking-widest">Active Pool</span>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[600px] pr-2 scrollbar-hide">
-                {itineraries.length > 0 ? itineraries
-                  .filter(exp => {
-                    const port = profile.destination.toLowerCase();
-                    return String(exp.destinationTag || '').toLowerCase().includes(port) || String(exp.name || '').toLowerCase().includes(port);
-                  })
-                  .map((itinerary) => (
-                  <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-3 rounded-3xl border-2 flex items-center gap-4 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-sm' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
-                      <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden relative border border-slate-200 flex-shrink-0">
-                      {itinerary.img ? <img src={itinerary.img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300">🚢</div>}
-                      {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={20} /></div>}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-[7px] font-black uppercase text-[#34a4b8] tracking-widest leading-none">{itinerary.category}</span>
-                        <h4 className="font-bold text-[11px] truncate text-slate-800 leading-tight">{itinerary.name}</h4>
-                        <p className="text-[#34a4b8] font-bold text-[10px]">{itinerary.price}</p>
-                      </div>
-                  </div>
-                )) : (
-                  <div className="md:col-span-2 py-20 text-center text-slate-400 italic">Connecting to Experiences...</div>
-                )}
-              </div>
-            </section>
-          </div>
-        </div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
+            </div>
+            <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><MapPin size={28} /></div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Base Port</p><p className="font-russo text-lg uppercase">{profile.destination}</p></div>
+            </div>
+        </section>
       </main>
 
       {/* MODALS */}
+      {activeModal === 'profile' && (
+        <Modal title="Profile Identity" onClose={() => setActiveModal(null)}>
+          <div className="space-y-6 pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Display Name <span className="text-red-500">*</span></label>
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" placeholder="e.g. Jane Smith" value={profile.fullName} onChange={e => setProfile({...profile, fullName: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personal Email <span className="text-red-500">*</span></label>
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="For setup notifications" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Ambassador Username (Slug) <span className="text-red-500">*</span></label>
+              <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" placeholder="e.g. jsmithtravel" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
+              <p className="text-[10px] text-[#34a4b8] font-bold mt-2 italic">This defines your URL: cruisytravel.com/{profile.slug || 'username'}</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Main Port</label>
+              <select className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" value={profile.destination} onChange={e => setProfile({...profile, destination: e.target.value})}>
+                {DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bio Hook <span className="text-red-500">*</span></label>
+              <textarea rows="3" className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium shadow-sm focus:border-[#34a4b8]" placeholder="A short blurb for your digital card..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+            </div>
+
+            <button onClick={() => setActiveModal(null)} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg cursor-pointer border-none">Update Profile</button>
+          </div>
+        </Modal>
+      )}
+
+      {activeModal === 'itinerary' && (
+        <Modal title="Curated Experiences" onClose={() => setActiveModal(null)}>
+          <div className="space-y-6 pb-4">
+            <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl text-xs font-bold flex items-center gap-3 border border-blue-100">
+               <Sparkles size={16} /> Select items to feature on your digital card.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {itineraries.length > 0 ? itineraries
+                  .filter(exp => {
+                    const port = profile.destination.toLowerCase();
+                    return String(exp.destinationTag || '').toLowerCase().includes(port) || 
+                           String(exp.name || '').toLowerCase().includes(port);
+                  })
+                  .map((itinerary) => (
+                  <div key={itinerary.id} onClick={() => toggleExperience(itinerary.id)} className={`p-4 rounded-[2rem] border-2 flex items-center gap-5 cursor-pointer transition-all ${selectedIds.includes(itinerary.id) ? 'border-[#34a4b8] bg-[#34a4b8]/5 shadow-sm' : 'border-slate-50 bg-white hover:border-slate-100'}`}>
+                      <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden relative border border-slate-200 flex-shrink-0">
+                      {itinerary.img ? <img src={itinerary.img} className="w-full h-full object-cover" alt={itinerary.name} /> : <div className="w-full h-full flex items-center justify-center text-slate-300">🚢</div>}
+                      {selectedIds.includes(itinerary.id) && <div className="absolute inset-0 bg-[#34a4b8]/80 flex items-center justify-center text-white"><CircleCheck size={24} /></div>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                      <span className="text-[8px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
+                      <h4 className="font-bold text-xs truncate">{itinerary.name}</h4>
+                      <p className="text-[#34a4b8] font-bold text-xs mt-1">{itinerary.price}</p>
+                      </div>
+                  </div>
+                )) : (
+                  <div className="py-10 text-center text-slate-400 italic md:col-span-2">Connecting to Cruisy database...</div>
+                )}
+            </div>
+            <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-4 shadow-lg border-none cursor-pointer">Confirm Selection</button>
+          </div>
+        </Modal>
+      )}
+
       {activeModal === 'resources' && (
         <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
           <div className="space-y-6 pb-6 text-center">
@@ -419,22 +440,22 @@ ${experiencesList || "No experiences selected"}
       )}
 
       {activeModal === 'preview' && (
-        <Modal title="Digital Advisor Preview" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
+        <Modal title="Live View & Send" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-8">
             <div className="flex justify-center">
               <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3rem] p-2 relative border-[8px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
                   <div className={`p-6 text-center ${activeTheme.bg}`}>
-                    <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}><activeTheme.icon size={28} /></div>
+                    <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg" style={{ backgroundColor: activeTheme.color }}><activeTheme.icon size={28} /></div>
                     <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight">@{profile.slug || 'advisor'}</h5>
-                    <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Ambassador'}</p>
+                    <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Travel Advisor'}</p>
                     <p className="font-pacifico text-[#34a4b8] text-sm mt-1">Cruisy Ambassador</p>
-                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed">{profile.bio || "No bio hook provided."}</p>
+                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed">{profile.bio || "No bio provided."}</p>
                   </div>
                   <div className="px-5 py-2 border-y border-slate-50 flex items-center justify-between"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Curated Experiences</p><Compass size={10} className="text-slate-300" /></div>
                   <div className="px-5 pb-5 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300">Choose experiences in the library to populate your buoy.</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300">No experiences selected yet.</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
@@ -464,17 +485,22 @@ ${experiencesList || "No experiences selected"}
                       </div>
                     </div>
 
-                    <div className="p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm space-y-3">
-                      <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Personal Live URL</h6>
-                      <div className="p-4 bg-slate-50 rounded-xl text-[11px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug || 'username'}</div>
-                      <p className="text-[10px] text-slate-500 italic leading-relaxed">Verification required. We will finalize your QR code and live link after setup data is received at hello@cruisytravel.com.</p>
-                    </div>
+                    {!canFinalize && (
+                      <div className="p-6 bg-red-50 border border-red-100 rounded-[2.5rem] flex gap-4 shadow-sm items-start">
+                         <div className="p-2 bg-red-400 rounded-full text-white flex-shrink-0"><AlertCircle size={20} /></div>
+                         <div className="space-y-1">
+                           <p className="text-xs font-bold text-red-900 leading-none">Setup Incomplete</p>
+                           <p className="text-[10px] text-red-800 leading-relaxed">We need your name, username, bio, and at least one curated experience before we can proceed.</p>
+                         </div>
+                      </div>
+                    )}
 
                     <button 
+                      disabled={!canFinalize}
                       onClick={() => setCurrentStep('disclosure')}
-                      className="w-full bg-[#34a4b8] text-white py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl shadow-[#34a4b8]/20 flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer mt-auto"
+                      className={`w-full py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer mt-auto ${canFinalize ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
                     >
-                        Proceed to Send <ChevronRight size={20} />
+                        Proceed to Final Step <ChevronRight size={20} />
                     </button>
                  </div>
                )}
@@ -516,7 +542,7 @@ ${experiencesList || "No experiences selected"}
                           <p className="leading-relaxed text-center">We need your setup data at <span className="font-bold">hello@cruisytravel.com</span> to build your custom page. Your profile will go live within 72 hours of verification.</p>
                        </div>
                     </div>
-                    <button onClick={() => { setCurrentStep('preview'); setDisclosureAgreed(false); }} className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-[#34a4b8] transition-colors bg-transparent border-none cursor-pointer">Return to Portal</button>
+                    <button onClick={() => { setCurrentStep('preview'); setDisclosureAgreed(false); }} className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-[#34a4b8] transition-colors bg-transparent border-none cursor-pointer">Return to Dashboard</button>
                  </div>
                )}
             </div>
