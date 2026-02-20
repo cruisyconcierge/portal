@@ -13,7 +13,8 @@
     "react-dom": "^18.3.1",
     "lucide-react": "^0.446.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.2"
+    "tailwind-merge": "^2.5.2",
+    "@emailjs/browser": "^4.4.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
