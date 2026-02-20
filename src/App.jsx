@@ -23,8 +23,8 @@ const THEMES = [
   { id: 'tropical', label: 'Tropical', color: '#34a4b8', icon: Palmtree, bg: 'bg-emerald-50' },
   { id: 'summer', label: 'Summer', color: '#f59e0b', icon: Sun, bg: 'bg-amber-50' },
   { id: 'cruise', label: 'Cruise', color: '#1e3a8a', icon: Ship, bg: 'bg-blue-50' },
-  { id: 'island', label: 'Island', color: '#10b981', icon: Umbrella, bg: 'bg-teal-50' },
-  { id: 'vacation', label: 'Vacation', color: '#ec4899', icon: Sunset, bg: 'bg-rose-50' }
+  { id: 'island', label: 'Island', color: '#10b981', icon: Anchor, bg: 'bg-teal-50' },
+  { id: 'vacation', label: 'Vacation', color: '#ec4899', icon: Compass, bg: 'bg-rose-50' }
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
@@ -312,11 +312,10 @@ ${experiencesList}
                     <Palmtree style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Curated Experiences</span>
                 </button>
-                {/* TOOLKIT COMING SOON */}
-                <div className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 border border-transparent opacity-60">
-                    <BookOpen style={{ color: activeTheme.color }} size={32} />
-                    <span className="font-russo text-xs text-slate-800 uppercase text-center">Ambassador Toolkit<br/><span className="text-[10px] text-[#34a4b8] font-bold">Coming Soon</span></span>
-                </div>
+                <button onClick={() => setActiveModal('resources')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
+                    <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
+                    <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
+                </button>
                 <button 
                   onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} 
                   className={`p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white ${canFinalize ? 'opacity-100' : 'opacity-70'}`}
@@ -342,7 +341,7 @@ ${experiencesList}
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}>
                   {selectedIds.length > 0 ? <CircleCheck size={28} className="text-emerald-500" /> : <Sparkles size={28} />}
                 </div>
-                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Curated Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><MapPin size={28} /></div>
@@ -423,6 +422,23 @@ ${experiencesList}
         </Modal>
       )}
 
+      {activeModal === 'resources' && (
+        <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
+          <div className="space-y-6 pb-6 text-center">
+            <div className="p-10 bg-slate-50 rounded-[3rem] border border-slate-100 shadow-sm mb-4">
+              <div className="w-16 h-16 bg-[#34a4b8]/10 text-[#34a4b8] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#34a4b8]/20">
+                <Sparkles size={32} />
+              </div>
+              <h4 className="font-russo text-2xl text-slate-900 uppercase mb-2">Coming Soon</h4>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+                We are currently building our Ambassador Toolkit. This section will soon feature success stories, product updates, and growth tips for your travel business.
+              </p>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl border-none cursor-pointer">Close Toolkit</button>
+          </div>
+        </Modal>
+      )}
+
       {activeModal === 'preview' && (
         <Modal title="Live View & Send" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-8">
@@ -474,7 +490,7 @@ ${experiencesList}
                          <div className="p-2 bg-red-400 rounded-full text-white flex-shrink-0"><AlertCircle size={20} /></div>
                          <div className="space-y-1">
                            <p className="text-xs font-bold text-red-900 leading-none">Setup Incomplete</p>
-                           <p className="text-[10px] text-red-800 leading-relaxed">We need your name, username, bio, and at least one curated experience before we can proceed.</p>
+                           <p className="text-[10px] text-red-800 leading-relaxed">We need your name, username, email, bio, and at least one curated experience before we can proceed.</p>
                          </div>
                       </div>
                     )}
