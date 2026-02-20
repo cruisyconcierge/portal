@@ -3,14 +3,15 @@ import {
   Palmtree, User, MapPin, Eye, Share2, Plus, Minus,
   ExternalLink, ChevronRight, Clipboard, Send, Loader2, CircleAlert,
   LogOut, CircleCheck, Navigation, Ship, Anchor, Waves, Info, X, Settings, 
-  Sun, Umbrella, Sunset, Compass, Sparkles, Mail, BookOpen, Lightbulb, TrendingUp, Zap
+  Sun, Umbrella, Sunset, Compass, Sparkles, Mail, BookOpen, Lightbulb, TrendingUp, Zap, ShieldCheck
 } from 'lucide-react';
 
 /**
- * ADVISOR PORTAL - portal.cruisytravel.com
+ * CRUISY AMBASSADOR PROGRAM - portal.cruisytravel.com
  * Theme: Island Lounge / Professional Coastal
- * Workflow: Manual Review via Pre-formatted Email
+ * Workflow: Copy and Send Profile Data
  * Branding: Russo One / Pacifico / Teal #34a4b8
+ * Constraints: No I references. No em dashes.
  */
 
 const DESTINATIONS = [
@@ -53,8 +54,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [itineraries, setItineraries] = useState([]);
   const [copyStatus, setCopyStatus] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState(null);
+  const [disclosureAgreed, setDisclosureAgreed] = useState(false);
+  const [currentStep, setCurrentStep] = useState('preview'); // preview, disclosure, final
 
   // --- PROFILE STATE ---
   const [profile, setProfile] = useState(() => {
@@ -73,7 +74,7 @@ export default function App() {
       fullName: '', 
       slug: '', 
       email: '', 
-      bio: 'Certified Travel Advisor with Cruisy Travel.', 
+      bio: '', 
       destination: 'Key West', 
       password: '',
       theme: 'tropical'
@@ -106,7 +107,6 @@ export default function App() {
   // --- DATA FETCHING ---
   const fetchItineraries = async () => {
     setLoading(true);
-    setError(null);
     const endpoints = ['itinerary', 'itineraries'];
     let success = false;
     for (const slug of endpoints) {
@@ -132,7 +132,6 @@ export default function App() {
         }
       } catch (err) { console.warn(`Fetch on /${slug} failed:`, err); }
     }
-    if (!success) { setError("Connecting to Cruisy database..."); }
     setLoading(false);
   };
 
@@ -140,53 +139,7 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  // --- EMAIL GENERATION LOGIC ---
-  const generatePublishEmail = () => {
-    const adminEmail = "hello@cruisytravel.com"; 
-    const activeThemeLabel = THEMES.find(t => t.id === profile.theme)?.label || 'Tropical';
-    
-    const selectedList = selectedIds.map(id => {
-      const it = itineraries.find(i => i.id === id);
-      return `- ${it ? it.name : id} (ID: ${id})`;
-    }).join('\n');
-
-    const subject = `Ambassador Profile Submission: ${profile.fullName} (@${profile.slug})`;
-    const body = `Hello Cruisy Team,
-
-I've completed the curation of my Ambassador profile and would like to submit it for review and publication. Please find my account details and selected experiences below:
-
-PROFILE INFORMATION:
-- Status: Cruisy Ambassador
-- Display Name: ${profile.fullName}
-- Username/URL Slug: ${profile.slug}
-- Primary Contact Email: ${profile.email}
-- Primary Destination: ${profile.destination}
-- Selected Profile Theme: ${activeThemeLabel}
-
-BIO / HOOK:
-"${profile.bio || "No bio provided"}"
-
-CURATED EXPERIENCES:
-${selectedList || "No experiences selected yet."}
-
-I understand that the standard setup time is approximately 72 hours and look forward to receiving the confirmation email once my page is live.
-
-Thank you,
-${profile.fullName}`;
-
-    return `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
   // --- ACTIONS ---
-  const handleSubmission = () => {
-    setLoading(true);
-    setTimeout(() => {
-      window.location.href = generatePublishEmail();
-      setLoading(false);
-      setIsSubmitted(true);
-    }, 1200);
-  };
-
   const handleAuth = (e) => {
     e.preventDefault();
     if (authMode === 'signup') {
@@ -206,20 +159,37 @@ ${profile.fullName}`;
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('cruisy_current_session_slug');
-    setProfile({ fullName: '', slug: '', email: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
+    setProfile({ fullName: '', slug: '', email: '', bio: '', destination: 'Key West', password: '', theme: 'tropical' });
     setSelectedIds([]);
-  };
-
-  const switchAuthMode = (mode) => {
-    setAuthMode(mode);
-    if (mode === 'signup') {
-      setProfile({ fullName: '', slug: '', email: '', bio: 'Certified Travel Advisor with Cruisy Travel.', destination: 'Key West', password: '', theme: 'tropical' });
-      setSelectedIds([]);
-    }
   };
 
   const toggleExperience = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  // --- DATA PREPARATION FOR COPY ---
+  const generateProfileTextBlock = () => {
+    const experiencesList = selectedIds.map(id => {
+      const it = itineraries.find(i => i.id === id);
+      return `- ${it ? it.name : id}`;
+    }).join('\n');
+
+    return `Cruisy Ambassador Program Submission
+Travel Advisor Name: ${profile.fullName}
+Travel Advisor Email: ${profile.email}
+Travel Advisor Bio: ${profile.bio || "None provided"}
+User Slug: ${profile.slug}
+Theme Choice: ${profile.theme}
+
+Selected Experiences for Profile:
+${experiencesList || "No experiences selected"}`;
+  };
+
+  const handleCopyToClipboard = () => {
+    const text = generateProfileTextBlock();
+    navigator.clipboard.writeText(text);
+    setCopyStatus(true);
+    setTimeout(() => setCopyStatus(false), 2000);
   };
 
   const activeTheme = THEMES.find(t => t.id === profile.theme) || THEMES[0];
@@ -239,12 +209,12 @@ ${profile.fullName}`;
                 </h1>
               </div>
               <p className="font-pacifico text-2xl text-[#34a4b8] -mt-1 mb-2">Cruisy Ambassador</p>
-              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase font-bold">Advisor Portal</p>
+              <p className="font-russo text-[10px] text-slate-500 tracking-[0.5em] uppercase font-bold">Travel Advisor Portal</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="flex bg-slate-900/10 p-1 rounded-2xl">
-                <button onClick={() => switchAuthMode('login')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
-                <button onClick={() => switchAuthMode('signup')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'login' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Login</button>
+                <button onClick={() => setAuthMode('signup')} className={`flex-1 py-2 rounded-xl font-russo text-[10px] uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white shadow-md text-[#34a4b8]' : 'text-slate-600'}`}>Sign Up</button>
               </div>
               <form onSubmit={handleAuth} className="space-y-3">
                 {authMode === 'signup' && (
@@ -256,7 +226,7 @@ ${profile.fullName}`;
                 )}
                 <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
                 <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 shadow-sm" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
-                <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
+                <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer border-none">
                    {authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK'}
                    <Ship size={20} />
                 </button>
@@ -282,7 +252,7 @@ ${profile.fullName}`;
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end mr-4">
-            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Advisor</span>
+            <span className="font-russo text-[10px] text-slate-400 tracking-widest uppercase leading-none font-bold">Active Travel Advisor</span>
             <span className="font-russo text-[#34a4b8] text-xl font-bold leading-none mt-1 uppercase tracking-tight">{profile.slug}</span>
           </div>
           <button onClick={handleLogout} className="p-3 bg-slate-100 text-slate-400 hover:text-red-500 rounded-full transition-colors border border-slate-200 cursor-pointer border-none"><LogOut size={20} /></button>
@@ -298,7 +268,7 @@ ${profile.fullName}`;
                 </div>
                 <h2 className="text-5xl md:text-7xl font-russo text-slate-800 uppercase leading-[0.85] tracking-tight tracking-tighter">Advisor<br/><span style={{ color: activeTheme.color }}>Control</span></h2>
                 <p className="text-slate-500 font-medium text-lg md:text-xl leading-relaxed">
-                  Design your custom experience page. We manually review and publish your profile at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
+                  Design your custom experience page within the Cruisy Ambassador Program. We manually review and publish your profile at <span className="font-bold underline" style={{ color: activeTheme.color }}>cruisytravel.com/{profile.slug || 'username'}</span>
                 </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto relative z-10">
@@ -314,7 +284,7 @@ ${profile.fullName}`;
                     <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
                 </button>
-                <button onClick={() => setActiveModal('preview')} className="p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
+                <button onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} className="sm:col-span-2 p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white" style={{ backgroundColor: activeTheme.color }}>
                     <Eye size={32} className="group-hover:scale-110 transition-transform" />
                     <div className="flex flex-col items-start text-left">
                          <span className="font-russo text-xl uppercase tracking-tight leading-none">Live View</span>
@@ -331,7 +301,7 @@ ${profile.fullName}`;
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><CircleCheck size={28} /></div>
-                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Selected</p><p className="font-russo text-lg uppercase">{selectedIds.length} Itineraries</p></div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Selected</p><p className="font-russo text-lg uppercase">{selectedIds.length} Experiences</p></div>
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><Compass size={28} /></div>
@@ -351,7 +321,7 @@ ${profile.fullName}`;
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personal Email</label>
-                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="For notifications & contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="Required for contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
               </div>
             </div>
             
@@ -397,7 +367,7 @@ ${profile.fullName}`;
                <Sparkles size={16} /> Choose what to feature on your profile.
             </div>
             <div className="grid grid-cols-1 gap-3">
-                {itineraries
+                {itineraries.length > 0 ? itineraries
                   .filter(exp => {
                     const port = profile.destination.toLowerCase();
                     return String(exp.destinationTag || '').toLowerCase().includes(port) || 
@@ -411,11 +381,13 @@ ${profile.fullName}`;
                       </div>
                       <div className="flex-1 min-w-0">
                       <span className="text-[8px] font-black uppercase text-[#34a4b8] tracking-widest">{itinerary.category}</span>
-                      <h4 className="font-russo text-xs uppercase text-slate-800 leading-tight truncate">{itinerary.name}</h4>
+                      <h4 className="font-bold text-xs truncate">{itinerary.name}</h4>
                       <p className="text-[#34a4b8] font-bold text-xs mt-1">{itinerary.price}</p>
                       </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="py-10 text-center text-slate-400 italic">Connecting to Cruisy database...</div>
+                )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-4 shadow-lg border-none cursor-pointer">Confirm Selections</button>
           </div>
@@ -426,9 +398,9 @@ ${profile.fullName}`;
         <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
           <div className="space-y-6 pb-6 text-center">
             <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4">
-              <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Grow Your Travel Business</h4>
+              <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Build Your Travel Network</h4>
               <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
-                Access success stories, product updates, and expert tips to maximize your Ambassador influence.
+                Discover our latest success stories, check for new itinerary updates, and grab expert tips to grow your bookings.
               </p>
             </div>
 
@@ -437,7 +409,7 @@ ${profile.fullName}`;
                 <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><TrendingUp size={20} /></div>
                 <div>
                   <h5 className="font-russo text-xs uppercase text-slate-800">Success Stories</h5>
-                  <p className="text-[10px] text-slate-400">See how top Ambassadors are booking more.</p>
+                  <p className="text-[10px] text-slate-400">See how our top partners maximize their reach.</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
@@ -450,8 +422,8 @@ ${profile.fullName}`;
               <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left">
                 <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><Lightbulb size={20} /></div>
                 <div>
-                  <h5 className="font-russo text-xs uppercase text-slate-800">Expert Tips</h5>
-                  <p className="text-[10px] text-slate-400">Pro strategies for link sharing.</p>
+                  <h5 className="font-russo text-xs uppercase text-slate-800">Growth Tips</h5>
+                  <p className="text-[10px] text-slate-400">Pro strategies for sharing your profile.</p>
                 </div>
               </div>
             </div>
@@ -461,7 +433,7 @@ ${profile.fullName}`;
                 onClick={() => window.open('https://cruisytravel.com/advisor-resources', '_blank')}
                 className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 cursor-pointer border-none"
               >
-                <ExternalLink size={20} /> View All Resources
+                <ExternalLink size={20} /> Access Full Toolkit
               </button>
             </div>
 
@@ -473,39 +445,39 @@ ${profile.fullName}`;
       )}
 
       {activeModal === 'preview' && (
-        <Modal title="Live Preview" onClose={() => { setActiveModal(null); setIsSubmitted(false); }}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
+        <Modal title="Digital Advisor Preview" onClose={() => { setActiveModal(null); setCurrentStep('preview'); setDisclosureAgreed(false); }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-8">
             <div className="flex justify-center">
-              <div className="w-[260px] h-[540px] bg-slate-900 rounded-[3rem] p-2 relative border-[6px] border-slate-800 shadow-xl shadow-black/40">
+              <div className="w-[280px] h-[580px] bg-slate-900 rounded-[3rem] p-2 relative border-[8px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
                   {/* THEME STRIPE */}
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
-                  <div className={`p-5 text-center ${activeTheme.bg}`}>
-                    <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}>
-                       <activeTheme.icon size={24} />
+                  <div className={`p-6 text-center ${activeTheme.bg}`}>
+                    <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}>
+                       <activeTheme.icon size={28} />
                     </div>
-                    <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight tracking-tight">@{profile.slug}</h5>
+                    <h5 className="font-russo text-lg uppercase text-slate-800 leading-tight tracking-tight">@{profile.slug || 'advisor'}</h5>
                     <p className="text-[9px] font-black uppercase mt-1" style={{ color: activeTheme.color }}>{profile.fullName || 'Ambassador'}</p>
                     <p className="font-pacifico text-[#34a4b8] text-sm mt-1">Cruisy Ambassador</p>
-                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed font-medium">{profile.bio}</p>
+                    <p className="text-[9px] text-slate-500 italic mt-2 line-clamp-3 leading-relaxed font-medium">{profile.bio || "No bio provided."}</p>
                   </div>
 
-                  <div className="px-4 py-2 border-y border-slate-50 flex items-center justify-between">
+                  <div className="px-5 py-2 border-y border-slate-50 flex items-center justify-between">
                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Curated Experiences</p>
                      <Compass size={10} className="text-slate-300" />
                   </div>
 
-                  <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences to populate your buoy...</p>}
+                  <div className="px-5 pb-5 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your buoy.</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
                       return (
                         <div key={id} className="p-2 bg-white border border-slate-100 rounded-xl flex items-center gap-2 shadow-sm group">
                            <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                             {it.img ? <img src={it.img} className="w-full h-full object-cover" /> : <Ship className="m-auto opacity-20" size={16} />}
+                             {it.img ? <img src={it.img} className="w-full h-full object-cover" alt={it.name} /> : <Ship className="m-auto opacity-20" size={16} />}
                            </div>
-                           <div className="flex-1 min-w-0">
+                           <div className="flex-1 min-w-0 text-left">
                              <span className="text-[8px] font-bold text-slate-700 uppercase truncate block leading-none">{it.name}</span>
                              <span className="text-[7px] font-black text-[#34a4b8] uppercase tracking-tighter mt-1 block">{it.price}</span>
                            </div>
@@ -515,21 +487,10 @@ ${profile.fullName}`;
                     })}
                     {selectedIds.length > 0 && (
                       <div className="text-center">
-                        <button 
-                          onClick={() => {
-                            if (profile.email) {
-                              window.location.href = `mailto:${profile.email}?subject=Interested in ${profile.destination} with Cruisy`;
-                            } else {
-                              alert("Please add your personal email in Page Settings to activate the contact button.");
-                              setActiveModal('profile');
-                            }
-                          }}
-                          className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" 
-                          style={{ backgroundColor: activeTheme.color }}
-                        >
-                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Ambassador'}
+                        <button className="w-full text-white py-3 rounded-xl font-russo text-[9px] uppercase mt-4 shadow-lg shadow-black/10 border-none cursor-pointer flex items-center justify-center gap-2" style={{ backgroundColor: activeTheme.color }}>
+                          <Mail size={12} /> Contact {profile.fullName.split(' ')[0] || 'Advisor'}
                         </button>
-                        <p className="font-pacifico text-[#34a4b8] text-xs mt-2">Cruisy Ambassador</p>
+                        <p className="font-pacifico text-[#34a4b8] text-[10px] mt-2">Cruisy Ambassador</p>
                       </div>
                     )}
                   </div>
@@ -537,46 +498,127 @@ ${profile.fullName}`;
               </div>
             </div>
             
-            <div className="space-y-5 pb-10 text-left">
-               {!isSubmitted ? (
-                 <>
-                   <div className="p-6 bg-slate-50 rounded-[2.5rem] space-y-4 border border-slate-100 shadow-sm">
-                     <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Live Page URL</h6>
-                     <div className="p-3 bg-white rounded-xl flex items-center gap-2 border border-slate-200 shadow-inner overflow-hidden">
-                       <div className="flex-1 text-[10px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug}</div>
-                       <button onClick={() => { navigator.clipboard.writeText(`https://cruisytravel.com/${profile.slug}`); setCopyStatus(true); setTimeout(() => setCopyStatus(false), 2000); }} className="p-2 text-[#34a4b8] bg-[#34a4b8]/10 rounded-lg transition-all hover:bg-[#34a4b8]/20 border-none cursor-pointer flex-shrink-0">
-                         {copyStatus ? <CircleCheck size={14} /> : <Clipboard size={14} />}
-                       </button>
+            <div className="flex flex-col h-full min-h-[580px]">
+               {currentStep === 'preview' && (
+                 <div className="space-y-6 animate-in">
+                   <div className="p-8 bg-slate-50 rounded-[2.5rem] space-y-4 border border-slate-100 shadow-sm">
+                     <h6 className="font-russo text-[10px] uppercase text-slate-400 tracking-widest font-black leading-none">Your Professional URL</h6>
+                     <div className="p-4 bg-white rounded-xl flex items-center gap-2 border border-slate-200 shadow-inner overflow-hidden">
+                       <div className="flex-1 text-[11px] font-bold text-[#34a4b8] truncate lowercase">cruisytravel.com/{profile.slug || 'username'}</div>
                      </div>
                      <div className="p-4 bg-white/50 rounded-xl space-y-2 border border-dashed border-slate-200">
                        <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                         Your page logic is active. Every link on your profile automatically includes your unique tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug}</span>
+                         Every link on your live profile will automatically include your unique tracking ID: <span className="font-bold text-[#34a4b8]">?asn-ref={profile.slug || 'username'}</span>
                        </p>
                      </div>
                    </div>
 
-                   <div className="p-6 bg-amber-50 rounded-[2.5rem] border border-amber-100 flex gap-4 shadow-sm">
-                      <div className="p-2 bg-amber-400 rounded-full h-fit text-white flex-shrink-0"><Info size={16} /></div>
+                   <div className="p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 flex gap-4 shadow-sm items-start">
+                      <div className="p-2.5 bg-amber-400 rounded-full text-white flex-shrink-0"><Zap size={20} /></div>
                       <div className="space-y-1">
-                        <p className="text-xs font-bold text-amber-900 leading-none">Publishing Notice</p>
-                        <p className="text-[10px] text-amber-800 leading-relaxed">Submitting will open your email to send your curation to Cruisy Admin. Setup time is <span className="font-bold">72 hours</span>.</p>
+                        <p className="text-xs font-bold text-amber-900 leading-none">Ready to deploy?</p>
+                        <p className="text-[10px] text-amber-800 leading-relaxed">Proceed to the final step to finalize your account details and submit your curation to our team.</p>
                       </div>
                    </div>
 
-                   <button onClick={handleSubmission} disabled={loading} className="w-full bg-[#34a4b8] text-white py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer">
-                      {loading ? <Loader2 className="animate-spin" size={24} /> : <><Mail size={20} /> Publish to Network</>}
+                   <button 
+                     onClick={() => setCurrentStep('disclosure')}
+                     className="w-full bg-[#34a4b8] text-white py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl shadow-[#34a4b8]/20 flex items-center justify-center gap-3 active:scale-95 transition-all border-none cursor-pointer mt-auto"
+                   >
+                      Proceed to Final Step <ChevronRight size={20} />
                    </button>
-                 </>
-               ) : (
-                 <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 text-center space-y-6 animate-in zoom-in-95 duration-300 shadow-xl">
-                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-emerald-500/20">
-                       <CircleCheck size={40} />
+                 </div>
+               )}
+
+               {currentStep === 'disclosure' && (
+                 <div className="space-y-6 animate-in">
+                   <div className="p-8 bg-slate-900 text-white rounded-[2.5rem] space-y-6 shadow-2xl border border-white/10">
+                      <div className="flex items-center gap-3">
+                         <ShieldCheck className="text-[#34a4b8]" size={28} />
+                         <h4 className="font-russo text-lg uppercase leading-none">Program Disclosure</h4>
+                      </div>
+                      
+                      <div className="space-y-4 text-xs leading-relaxed text-slate-300">
+                         <p>We are a technology partner and sub affiliate platform, not an employer.</p>
+                         <p>We charge zero advisor fees (unlike most other programs).</p>
+                         <p>We handle guest inquiries and follow up on weather cancellations for you.</p>
+                         <p>The 10 to 12 percent commission covers the cost of the free website, your custom QR code, and our administrative support.</p>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/10">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                           <div className="relative flex items-center justify-center h-5 w-5 mt-0.5">
+                             <input 
+                               type="checkbox" 
+                               className="peer h-full w-full opacity-0 absolute cursor-pointer"
+                               checked={disclosureAgreed}
+                               onChange={(e) => setDisclosureAgreed(e.target.checked)}
+                             />
+                             <div className="h-full w-full border-2 border-white/20 rounded peer-checked:bg-[#34a4b8] peer-checked:border-[#34a4b8] transition-all" />
+                             <CircleCheck size={12} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                           </div>
+                           <span className="text-[10px] text-slate-400 font-bold group-hover:text-white transition-colors">We understand the value of the Cruisy Ambassador Program and agree to these terms.</span>
+                        </label>
+                      </div>
+                   </div>
+
+                   <div className="flex gap-4">
+                     <button 
+                       onClick={() => setCurrentStep('preview')}
+                       className="flex-1 bg-slate-100 text-slate-500 py-6 rounded-[2.2rem] font-russo uppercase text-xs tracking-widest cursor-pointer border-none"
+                     >
+                        Go Back
+                     </button>
+                     <button 
+                       disabled={!disclosureAgreed}
+                       onClick={() => setCurrentStep('final')}
+                       className={`flex-[2] py-6 rounded-[2.2rem] font-russo uppercase tracking-widest shadow-xl transition-all border-none cursor-pointer ${disclosureAgreed ? 'bg-[#34a4b8] text-white shadow-[#34a4b8]/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
+                     >
+                        Finish Selection
+                     </button>
+                   </div>
+                 </div>
+               )}
+
+               {currentStep === 'final' && (
+                 <div className="space-y-6 animate-in">
+                    <div className="p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-xl text-center space-y-6">
+                       <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-emerald-500/20">
+                          <CircleCheck size={40} />
+                       </div>
+                       <div className="space-y-2">
+                          <h4 className="font-russo text-2xl text-slate-800 uppercase leading-none">The Final Step</h4>
+                          <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">Click the button below to copy your info, then click the open email button and paste the info into the body of the email to send it to us.</p>
+                       </div>
+                       
+                       <div className="space-y-4 pt-4">
+                          <button 
+                             onClick={handleCopyToClipboard}
+                             className={`w-full py-5 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 transition-all border-none cursor-pointer ${copyStatus ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-slate-900/20'}`}
+                          >
+                             {copyStatus ? <><CircleCheck size={20} /> Copied!</> : <><Clipboard size={20} /> Copy My Profile Info</>}
+                          </button>
+
+                          <button 
+                             onClick={() => window.location.href = `mailto:hello@cruisytravel.com?subject=New Travel Advisor Sign-Up: ${profile.fullName}`}
+                             className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#34a4b8]/20 border-none cursor-pointer"
+                          >
+                             <Mail size={20} /> Open Email to Send
+                          </button>
+                       </div>
+
+                       <div className="p-5 bg-slate-50 rounded-2xl text-[10px] text-slate-400 text-left border border-slate-100">
+                          <p className="font-bold text-slate-500 mb-1 uppercase tracking-widest">Sent to: hello@cruisytravel.com</p>
+                          <p className="italic">We will reach out within 72 hours with your live link and custom QR code. If you have any trouble, please send us a direct message.</p>
+                       </div>
                     </div>
-                    <div className="space-y-2">
-                       <h4 className="font-russo text-xl text-emerald-900 uppercase leading-none">Request Sent!</h4>
-                       <p className="text-xs text-emerald-700 leading-relaxed font-medium">Please verify your email client sent the message. We will manually build your page within 72 hours.</p>
-                    </div>
-                    <button onClick={() => setActiveModal(null)} className="text-emerald-500 font-bold text-[10px] uppercase tracking-[0.2em] hover:underline bg-transparent border-none cursor-pointer">Return to Dashboard</button>
+                    
+                    <button 
+                       onClick={() => { setCurrentStep('preview'); setDisclosureAgreed(false); }}
+                       className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-[#34a4b8] transition-colors bg-transparent border-none cursor-pointer"
+                    >
+                       Edit Profile Before Sending
+                    </button>
                  </div>
                )}
             </div>
