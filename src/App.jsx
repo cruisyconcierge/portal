@@ -312,10 +312,11 @@ ${experiencesList}
                     <Palmtree style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
                     <span className="font-russo text-xs text-slate-800 uppercase">Curated Experiences</span>
                 </button>
-                <button onClick={() => setActiveModal('resources')} className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 hover:bg-white transition-all border border-transparent hover:border-slate-200 group hover:shadow-lg cursor-pointer border-none">
-                    <BookOpen style={{ color: activeTheme.color }} className="group-hover:scale-110 transition-transform" size={32} />
-                    <span className="font-russo text-xs text-slate-800 uppercase">Ambassador Toolkit</span>
-                </button>
+                {/* TOOLKIT COMING SOON */}
+                <div className="p-8 bg-slate-50 rounded-[2.5rem] flex flex-col items-center gap-3 border border-transparent opacity-60">
+                    <BookOpen style={{ color: activeTheme.color }} size={32} />
+                    <span className="font-russo text-xs text-slate-800 uppercase text-center">Ambassador Toolkit<br/><span className="text-[10px] text-[#34a4b8] font-bold">Coming Soon</span></span>
+                </div>
                 <button 
                   onClick={() => { setActiveModal('preview'); setCurrentStep('preview'); }} 
                   className={`p-8 rounded-[2.5rem] flex items-center justify-center gap-6 hover:brightness-105 transition-all shadow-xl group cursor-pointer border-none text-white ${canFinalize ? 'opacity-100' : 'opacity-70'}`}
@@ -418,23 +419,6 @@ ${experiencesList}
                 )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-4 shadow-lg border-none cursor-pointer">Confirm Selection</button>
-          </div>
-        </Modal>
-      )}
-
-      {activeModal === 'resources' && (
-        <Modal title="Ambassador Toolkit" onClose={() => setActiveModal(null)}>
-          <div className="space-y-6 pb-6 text-center">
-            <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-sm mb-4">
-              <h4 className="font-russo text-xl text-slate-900 uppercase mb-2">Grow Your Travel Business</h4>
-              <p className="text-sm text-slate-500 max-w-sm mx-auto">Discover success stories and grab expert tips to grow your bookings.</p>
-            </div>
-            <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
-              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><TrendingUp size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Success Stories</h5><p className="text-[10px] text-slate-400">See how top partners maximize reach.</p></div></div>
-              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><Zap size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Product Updates</h5><p className="text-[10px] text-slate-400">Latest itineraries and vault additions.</p></div></div>
-              <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl text-left"><div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><Lightbulb size={20} /></div><div><h5 className="font-russo text-xs uppercase text-slate-800">Growth Tips</h5><p className="text-[10px] text-slate-400">Pro strategies for sharing your link.</p></div></div>
-            </div>
-            <button onClick={() => window.open('https://cruisytravel.com/advisor-resources', '_blank')} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 cursor-pointer border-none mt-6"><ExternalLink size={20} /> Access Full Toolkit</button>
           </div>
         </Modal>
       )}
