@@ -107,7 +107,7 @@ export default function App() {
     }
   }, [profile, selectedIds, isLoggedIn]);
 
-  // --- EMAILJS SCRIPT INJECTION (FIX FOR IMPORT ERROR) ---
+  // --- EMAILJS SCRIPT INJECTION ---
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
@@ -156,9 +156,9 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  // --- SUBMISSION LOGIC ---
+  // --- EMAILJS SUBMISSION LOGIC ---
   const sendAmbassadorData = async () => {
-    if (!emailJSLoaded) {
+    if (!emailJSLoaded || !window.emailjs) {
       alert("Submission system is still loading. Please wait a second.");
       return;
     }
@@ -359,7 +359,7 @@ export default function App() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Personal Email</label>
-                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="For notifications & contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
+                <input className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none font-bold text-slate-800 shadow-sm focus:border-[#34a4b8]" type="email" placeholder="Required for contact button" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} />
               </div>
             </div>
             
