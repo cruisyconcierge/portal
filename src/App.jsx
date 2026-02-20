@@ -141,21 +141,38 @@ export default function App() {
   }, [isLoggedIn]);
 
   // --- VALIDATION ---
-  const isProfileComplete = profile.fullName && profile.slug && profile.email && profile.bio;
+  const isProfileComplete = profile.fullName && profile.slug && profile.email && profile.bio && profile.bio.length > 5;
   const hasExperiences = selectedIds.length > 0;
   const canFinalize = isProfileComplete && hasExperiences;
 
-  // --- EMAIL COMPILATION ---
-  const generateMailtoLink = () => {
+  // --- EMAIL COMPILATION (FIXED FORMATTING) ---
+  const handleOpenEmail = () => {
     const experiencesList = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
       return `- ${it ? it.name : id}`;
-    }).join('%0D%0A');
+    }).join('\n');
 
-    const subject = encodeURIComponent(`Ambassador Profile Setup: ${profile.fullName}`);
-    const body = encodeURIComponent(`Hello Cruisy Team,%0D%0A%0D%0AWe have finished our curation. Please set up our profile with the following details:%0D%0A%0D%0AAdvisor Name: ${profile.fullName}%0D%0AAdvisor Email: ${profile.email}%0D%0AUsername/URL: cruisytravel.com/${profile.slug}%0D%0ABase Port: ${profile.destination}%0D%0ATheme: ${profile.theme}%0D%0A%0D%0ABio Hook:%0D%0A${profile.bio}%0D%0A%0D%0ACurated Experiences:%0D%0A${experiencesList}%0D%0A%0D%0AThank you!`);
+    const subject = `Ambassador Profile Setup: ${profile.fullName}`;
+    const body = `Hello Cruisy Team,
+
+We have finished our curation. Please set up our profile with the following details:
+
+Advisor Name: ${profile.fullName}
+Advisor Email: ${profile.email}
+Username/URL: cruisytravel.com/${profile.slug}
+Base Port: ${profile.destination}
+Theme: ${profile.theme}
+
+Bio Hook:
+${profile.bio}
+
+Curated Experiences:
+${experiencesList}
+
+Thank you!`;
     
-    return `mailto:hello@cruisytravel.com?subject=${subject}&body=${body}`;
+    const mailto = `mailto:hello@cruisytravel.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailto, '_blank');
   };
 
   const generateProfileTextBlock = () => {
@@ -203,7 +220,7 @@ ${experiencesList}
       if (!profile.fullName || !profile.slug || !profile.email) {
         return alert("Please fill out your identity fields including your email.");
       }
-      if (profile.password.length <= 6) {
+      if (profile.password.length < 7) {
         return alert("Please choose a password with more than 6 characters.");
       }
       setIsLoggedIn(true);
@@ -345,9 +362,9 @@ ${experiencesList}
         </section>
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className={`bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border flex items-center gap-6 shadow-sm transition-colors ${profile.fullName && profile.slug ? 'border-emerald-200' : 'border-white'}`}>
+            <div className={`bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border flex items-center gap-6 shadow-sm transition-colors ${profile.fullName && profile.slug && profile.email && profile.bio ? 'border-emerald-200' : 'border-white'}`}>
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}>
-                  {profile.fullName && profile.slug ? <CircleCheck size={28} className="text-emerald-500" /> : <User size={28} />}
+                  {profile.fullName && profile.slug && profile.email && profile.bio ? <CircleCheck size={28} className="text-emerald-500" /> : <User size={28} />}
                 </div>
                 <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Identity Status</p><p className="font-russo text-lg uppercase">{profile.fullName ? 'Complete' : 'Pending'}</p></div>
             </div>
@@ -355,7 +372,7 @@ ${experiencesList}
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}>
                   {selectedIds.length > 0 ? <CircleCheck size={28} className="text-emerald-500" /> : <Sparkles size={28} />}
                 </div>
-                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Curated Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><MapPin size={28} /></div>
@@ -451,7 +468,7 @@ ${experiencesList}
               </div>
               <h4 className="font-russo text-2xl text-slate-900 uppercase mb-2">Coming Soon</h4>
               <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
-                We are currently building our Ambassador Toolkit. This section will soon feature success stories, product updates, and growth tips for your travel business.
+                We are currently building our Ambassador Toolkit. This section will soon feature success stories, product updates, and growth tips for you as a Travel Advisor.
               </p>
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-xl border-none cursor-pointer">Close Toolkit</button>
@@ -550,7 +567,7 @@ ${experiencesList}
                        <div className="w-16 h-16 bg-[#34a4b8] rounded-full flex items-center justify-center mx-auto text-white shadow-lg shadow-blue-500/20"><Mail size={40} /></div>
                        <div className="space-y-2"><h4 className="font-russo text-2xl text-blue-900 uppercase leading-none">The Final Step</h4><p className="text-xs text-blue-700 leading-relaxed max-w-xs mx-auto">Click below to open your email client with your pre compiled setup data.</p></div>
                        <div className="space-y-4 pt-4">
-                          <button onClick={() => window.location.href = generateMailtoLink()} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#34a4b8]/30 border-none cursor-pointer active:scale-95 transition-all"><Mail size={24} /> Open Email to Send</button>
+                          <button onClick={handleOpenEmail} className="w-full bg-[#34a4b8] text-white py-6 rounded-2xl font-russo uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#34a4b8]/30 border-none cursor-pointer active:scale-95 transition-all"><Mail size={24} /> Open Email to Send</button>
                           
                           <div className="pt-4 border-t border-blue-100">
                             <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-3">Fallback Option (If email is blank)</p>
