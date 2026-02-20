@@ -12,7 +12,7 @@ import {
  * Theme: Island Lounge / Professional Coastal
  * Workflow: Popup-based Hub with Mailto/Copy fallback
  * Branding: Russo One / Pacifico / Teal #34a4b8
- * Constraints: No I references. No em dashes.
+ * Constraints: No em dashes. Email body uses "I/my".
  */
 
 const DESTINATIONS = [
@@ -145,7 +145,7 @@ export default function App() {
   const hasExperiences = selectedIds.length > 0;
   const canFinalize = isProfileComplete && hasExperiences;
 
-  // --- EMAIL COMPILATION (FIXED FORMATTING) ---
+  // --- EMAIL COMPILATION (PERSONALIZED PRO-NOUNS) ---
   const handleOpenEmail = () => {
     const experiencesList = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
@@ -155,7 +155,7 @@ export default function App() {
     const subject = `Ambassador Profile Setup: ${profile.fullName}`;
     const body = `Hello Cruisy Team,
 
-We have finished our curation. Please set up our profile with the following details:
+I have finished my curation. Please set up my profile with the following details:
 
 Advisor Name: ${profile.fullName}
 Advisor Email: ${profile.email}
