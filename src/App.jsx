@@ -11,8 +11,7 @@ import {
  * Theme: Island Lounge / Professional Coastal
  * Workflow: Automated Submission via EmailJS
  * Branding: Russo One / Pacifico / Teal #34a4b8
- * Terminologies: 'Cruisy Ambassador Program', 'Travel Advisor', 'we', 'us'
- * Constraints: No em dashes.
+ * Constraints: No I references, No em dashes.
  */
 
 const DESTINATIONS = [
@@ -57,7 +56,6 @@ export default function App() {
   const [copyStatus, setCopyStatus] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showDisclosure, setShowDisclosure] = useState(false);
-  const [error, setError] = useState(null);
   const [sdkReady, setSdkReady] = useState(false);
 
   // --- PROFILE STATE ---
@@ -107,7 +105,7 @@ export default function App() {
     }
   }, [profile, selectedIds, isLoggedIn]);
 
-  // --- EMAILJS INITIALIZATION (Using CDN Script Injection to bypass bundler errors) ---
+  // --- EMAILJS SCRIPT INJECTION ---
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
@@ -124,7 +122,6 @@ export default function App() {
   // --- DATA FETCHING ---
   const fetchItineraries = async () => {
     setLoading(true);
-    setError(null);
     const endpoints = ['itinerary', 'itineraries'];
     let success = false;
     for (const slug of endpoints) {
@@ -150,7 +147,6 @@ export default function App() {
         }
       } catch (err) { console.warn(`Fetch on /${slug} failed:`, err); }
     }
-    if (!success) { setError("Connecting to Cruisy database..."); }
     setLoading(false);
   };
 
@@ -167,13 +163,12 @@ export default function App() {
 
     setLoading(true);
     
-    // Formatting experiences as a clean comma separated list
     const selectedNames = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
       return it ? it.name : id;
     }).join(', ');
 
-    // Exact Mapping to Template Variables
+    // EXACT MAPPING TO TEMPLATE VARIABLES
     const templateParams = {
       user_name: profile.fullName,
       user_email: profile.email,
@@ -182,20 +177,19 @@ export default function App() {
     };
 
     try {
-      const result = await window.emailjs.send(
+      await window.emailjs.send(
         "service_t5k7p58",
         "template_actak9i",
         templateParams
       );
       
-      console.log("EmailJS Success:", result.text);
       setLoading(false);
       setIsSubmitted(true);
       setShowDisclosure(false);
     } catch (err) {
       console.error("EmailJS Error:", err);
       setLoading(false);
-      alert("We encountered an error during submission. Please check your internet connection or try again later.");
+      alert("We encountered an error during submission. Please check your internet connection or verify your dashboard settings.");
     }
   };
 
@@ -410,7 +404,7 @@ export default function App() {
                <Sparkles size={16} /> Choose what to feature on your profile.
             </div>
             <div className="grid grid-cols-1 gap-3">
-                {itineraries
+                {itineraries.length > 0 ? itineraries
                   .filter(exp => {
                     const port = profile.destination.toLowerCase();
                     return String(exp.destinationTag || '').toLowerCase().includes(port) || 
@@ -428,9 +422,8 @@ export default function App() {
                       <p className="text-[#34a4b8] font-bold text-xs mt-1">{itinerary.price}</p>
                       </div>
                   </div>
-                ))}
-                {itineraries.length === 0 && !loading && (
-                  <div className="py-10 text-center text-slate-400 italic">No itineraries found for your destination.</div>
+                )) : (
+                  <div className="py-10 text-center text-slate-400 italic">Connecting to Cruisy database...</div>
                 )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-4 shadow-lg border-none cursor-pointer">Confirm Selections</button>
@@ -494,7 +487,6 @@ export default function App() {
             <div className="flex justify-center">
               <div className="w-[260px] h-[540px] bg-slate-900 rounded-[3rem] p-2 relative border-[6px] border-slate-800 shadow-xl shadow-black/40">
                 <div className="w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
-                  {/* THEME STRIPE */}
                   <div className="h-3 w-full" style={{ backgroundColor: activeTheme.color }} />
                   <div className={`p-5 text-center ${activeTheme.bg}`}>
                     <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white shadow-lg shadow-black/10" style={{ backgroundColor: activeTheme.color }}>
@@ -512,14 +504,14 @@ export default function App() {
                   </div>
 
                   <div className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-hide flex-1 pt-3">
-                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your buoy...</p>}
+                    {selectedIds.length === 0 && <p className="text-center py-10 text-[10px] italic text-slate-300 px-4 leading-relaxed">Choose experiences in the library to populate your profile...</p>}
                     {selectedIds.map(id => {
                       const it = itineraries.find(i => i.id === id);
                       if (!it) return null;
                       return (
                         <div key={id} className="p-2 bg-white border border-slate-100 rounded-xl flex items-center gap-2 shadow-sm group">
                            <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                             {it.img ? <img src={it.img} className="w-full h-full object-cover" /> : <Ship className="m-auto opacity-20" size={16} />}
+                             {it.img ? <img src={it.img} className="w-full h-full object-cover" alt={it.name} /> : <Ship className="m-auto opacity-20" size={16} />}
                            </div>
                            <div className="flex-1 min-w-0">
                              <span className="text-[8px] font-bold text-slate-700 uppercase truncate block leading-none">{it.name}</span>
