@@ -58,7 +58,7 @@ export default function App() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showDisclosure, setShowDisclosure] = useState(false);
   const [error, setError] = useState(null);
-  const [emailJSLoaded, setEmailJSLoaded] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
 
   // --- PROFILE STATE ---
   const [profile, setProfile] = useState(() => {
@@ -107,16 +107,18 @@ export default function App() {
     }
   }, [profile, selectedIds, isLoggedIn]);
 
-  // --- EMAILJS SCRIPT INJECTION ---
+  // --- EMAILJS INITIALIZATION (Using CDN Script Injection to bypass bundler errors) ---
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
     script.async = true;
     script.onload = () => {
-      window.emailjs.init("CEmX_DkN73HnHsFua");
-      setEmailJSLoaded(true);
+      if (window.emailjs) {
+        window.emailjs.init("CEmX_DkN73HnHsFua");
+        setSdkReady(true);
+      }
     };
-    document.head.appendChild(script);
+    document.body.appendChild(script);
   }, []);
 
   // --- DATA FETCHING ---
@@ -156,39 +158,42 @@ export default function App() {
     if (isLoggedIn) fetchItineraries();
   }, [isLoggedIn]);
 
-  // --- EMAILJS SUBMISSION LOGIC ---
+  // --- SUBMISSION FUNCTION ---
   const sendAmbassadorData = async () => {
-    if (!emailJSLoaded || !window.emailjs) {
-      alert("Submission system is still loading. Please wait a second.");
+    if (!sdkReady || !window.emailjs) {
+      alert("We are still initializing the submission system. Please try again in a moment.");
       return;
     }
-    
+
     setLoading(true);
     
+    // Formatting experiences as a clean comma separated list
     const selectedNames = selectedIds.map(id => {
       const it = itineraries.find(i => i.id === id);
       return it ? it.name : id;
     }).join(', ');
 
+    // Exact Mapping to Template Variables
     const templateParams = {
       user_name: profile.fullName,
       user_email: profile.email,
-      user_bio: profile.bio || "No bio provided.",
-      experiences_list: selectedNames
+      user_bio: profile.bio || "No bio provided",
+      experiences_list: selectedNames || "No experiences selected"
     };
 
     try {
-      await window.emailjs.send(
+      const result = await window.emailjs.send(
         "service_t5k7p58",
         "template_actak9i",
         templateParams
       );
       
+      console.log("EmailJS Success:", result.text);
       setLoading(false);
       setIsSubmitted(true);
       setShowDisclosure(false);
     } catch (err) {
-      console.error("Submission failed", err);
+      console.error("EmailJS Error:", err);
       setLoading(false);
       alert("We encountered an error during submission. Please check your internet connection or try again later.");
     }
@@ -264,7 +269,7 @@ export default function App() {
                 )}
                 <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
                 <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 shadow-sm" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
-                <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer">
+                <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer border-none">
                    {authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK'}
                    <Ship size={20} />
                 </button>
@@ -424,6 +429,9 @@ export default function App() {
                       </div>
                   </div>
                 ))}
+                {itineraries.length === 0 && !loading && (
+                  <div className="py-10 text-center text-slate-400 italic">No itineraries found for your destination.</div>
+                )}
             </div>
             <button onClick={() => setActiveModal(null)} className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo uppercase mt-4 shadow-lg border-none cursor-pointer">Confirm Selections</button>
           </div>
