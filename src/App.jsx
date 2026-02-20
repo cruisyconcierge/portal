@@ -4,7 +4,7 @@ import {
   ExternalLink, ChevronRight, Clipboard, Send, Loader2, CircleAlert,
   LogOut, CircleCheck, Navigation, Ship, Anchor, Waves, Info, X, Settings, 
   Sun, Umbrella, Sunset, Compass, Sparkles, Mail, BookOpen, Lightbulb, TrendingUp, Zap, ShieldCheck,
-  AlertCircle, Layout, Fingerprint
+  AlertCircle, Layout, Fingerprint, Plane
 } from 'lucide-react';
 
 /**
@@ -24,7 +24,7 @@ const THEMES = [
   { id: 'summer', label: 'Summer', color: '#f59e0b', icon: Sun, bg: 'bg-amber-50' },
   { id: 'cruise', label: 'Cruise', color: '#1e3a8a', icon: Ship, bg: 'bg-blue-50' },
   { id: 'island', label: 'Island', color: '#10b981', icon: Anchor, bg: 'bg-teal-50' },
-  { id: 'vacation', label: 'Vacation', color: '#ec4899', icon: Compass, bg: 'bg-rose-50' }
+  { id: 'vacation', label: 'Vacation', color: '#ec4899', icon: Plane, bg: 'bg-rose-50' }
 ];
 
 const WP_BASE_URL = 'https://cruisytravel.com';
@@ -200,7 +200,12 @@ ${experiencesList}
   const handleAuth = (e) => {
     e.preventDefault();
     if (authMode === 'signup') {
-      if (!profile.fullName || !profile.slug || !profile.email) return alert("Please fill out your identity fields including your email.");
+      if (!profile.fullName || !profile.slug || !profile.email) {
+        return alert("Please fill out your identity fields including your email.");
+      }
+      if (profile.password.length <= 6) {
+        return alert("Please choose a password with more than 6 characters.");
+      }
       setIsLoggedIn(true);
     } else {
       const savedData = localStorage.getItem(`cruisy_user_${profile.slug}`);
@@ -257,7 +262,16 @@ ${experiencesList}
                   </>
                 )}
                 <input required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none font-bold text-slate-800 shadow-sm" placeholder="Advisor Username" value={profile.slug} onChange={e => setProfile({...profile, slug: e.target.value.toLowerCase().replace(/\s/g, '')})} />
-                <input type="password" required className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 shadow-sm" placeholder="Password" value={profile.password} onChange={e => setProfile({...profile, password: e.target.value})} />
+                <input 
+                  type="password" 
+                  required 
+                  minLength={7}
+                  className="w-full p-4 rounded-2xl bg-white border border-slate-200 focus:border-[#34a4b8] outline-none text-slate-800 shadow-sm" 
+                  placeholder="Password (more than 6 characters)" 
+                  value={profile.password} 
+                  autoComplete={authMode === 'signup' ? "new-password" : "current-password"}
+                  onChange={e => setProfile({...profile, password: e.target.value})} 
+                />
                 <button type="submit" className="w-full bg-[#34a4b8] text-white py-5 rounded-2xl font-russo text-lg shadow-xl shadow-[#34a4b8]/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer border-none">
                    {authMode === 'login' ? 'ENTER LOUNGE' : 'JOIN NETWORK'}
                    <Ship size={20} />
@@ -341,7 +355,7 @@ ${experiencesList}
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}>
                   {selectedIds.length > 0 ? <CircleCheck size={28} className="text-emerald-500" /> : <Sparkles size={28} />}
                 </div>
-                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Curated Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
+                <div><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Experiences</p><p className="font-russo text-lg uppercase">{selectedIds.length} Selected</p></div>
             </div>
             <div className="bg-white/60 backdrop-blur p-8 rounded-[2.5rem] border border-white flex items-center gap-6 shadow-sm">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${activeTheme.color}15`, color: activeTheme.color }}><MapPin size={28} /></div>
@@ -383,7 +397,13 @@ ${experiencesList}
               <textarea rows="3" className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none text-slate-800 font-medium shadow-sm focus:border-[#34a4b8]" placeholder="A short blurb for your digital card..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
             </div>
 
-            <button onClick={() => setActiveModal(null)} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg cursor-pointer border-none">Update Profile</button>
+            <button 
+              disabled={!profile.fullName || !profile.email || !profile.slug || !profile.bio}
+              onClick={() => setActiveModal(null)} 
+              className={`w-full py-5 rounded-2xl font-russo uppercase tracking-widest shadow-lg border-none cursor-pointer transition-all ${(!profile.fullName || !profile.email || !profile.slug || !profile.bio) ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-slate-900 text-white shadow-slate-900/20'}`}
+            >
+              Update Profile
+            </button>
           </div>
         </Modal>
       )}
@@ -392,7 +412,7 @@ ${experiencesList}
         <Modal title="Curated Experiences" onClose={() => setActiveModal(null)}>
           <div className="space-y-6 pb-4">
             <div className="p-4 bg-blue-50 text-blue-700 rounded-2xl text-xs font-bold flex items-center gap-3 border border-blue-100">
-               <Sparkles size={16} /> Select items to feature on your digital card.
+               <Sparkles size={16} /> Select curated experiences you want on your profile page.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {itineraries.length > 0 ? itineraries
